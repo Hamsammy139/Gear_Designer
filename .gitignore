@@ -1,0 +1,13 @@
+# Dependencies (none today, but just in case)
+node_modules/
+
+# Test exports -- keep printable files out of the repo
+*.stl
+*.step
+*.stl.txt
+*.step.txt
+
+# OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini

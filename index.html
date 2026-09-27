@@ -1,0 +1,1767 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gear Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --ink:#0C1216; --panel:#131C22; --panel2:#0F171C; --rule:#22323C;
+  --text:#DEE9EF; --muted:#7A929E; --signal:#35A7E0; --amber:#E9A13B; --bad:#E0604B;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --disp:"Space Grotesk",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+/* this tool family is dark-only by design; tokens restated so the viewer's theme can't flip them */
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){ --ink:#0C1216; --panel:#131C22; --text:#DEE9EF; } }
+:root[data-theme="dark"]{ --ink:#0C1216; --panel:#131C22; --text:#DEE9EF; }
+html{scroll-padding-top:env(safe-area-inset-top,0px); background:#0C1216}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--ink); color:var(--text);
+  font-family:var(--disp); font-size:14px;
+  display:grid; grid-template-columns:348px 1fr; height:100%; overflow:hidden;
+}
+h1{font-size:15px;font-weight:700;letter-spacing:-.01em;margin:0}
+.sub{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+
+#panel{background:var(--panel);border-right:1px solid var(--rule);display:flex;flex-direction:column;min-height:0}
+#phead{padding:16px 18px 14px;border-bottom:1px solid var(--rule)}
+#pbody{overflow-y:auto;padding:4px 18px 20px;flex:1;min-height:0}
+#pbody::-webkit-scrollbar{width:9px}
+#pbody::-webkit-scrollbar-thumb{background:var(--rule);border-radius:9px}
+
+fieldset{border:0;margin:0;padding:18px 0 4px;min-width:0}
+fieldset+fieldset{border-top:1px solid var(--rule)}
+legend{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--signal);padding:0;margin-bottom:12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.row label{color:var(--muted);font-size:12.5px;line-height:1.3}
+.row .ctl{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+input[type=range]{width:96px;accent-color:var(--signal);background:transparent}
+input[type=number]{width:64px;background:var(--panel2);border:1px solid var(--rule);color:var(--text);
+  font-family:var(--mono);font-size:12px;padding:5px 6px;border-radius:4px;text-align:right}
+input.nb{width:54px}
+input[type=number]:focus,select:focus,button:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--signal);outline-offset:1px}
+select{background:var(--panel2);border:1px solid var(--rule);color:var(--text);
+  font-family:var(--mono);font-size:12px;padding:5px 6px;border-radius:4px;width:100%}
+.val{font-family:var(--mono);font-size:12px;color:var(--text);min-width:46px;text-align:right}
+.sw{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+.sw input{accent-color:var(--signal);width:15px;height:15px;margin:0;cursor:pointer}
+.hint{font-family:var(--mono);font-size:10.5px;color:var(--muted);line-height:1.5;margin:-4px 0 12px}
+input:disabled,select:disabled,button:disabled{opacity:.4}
+.row.off label{opacity:.45}
+.hide{display:none!important}
+
+.conv{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.conv input{width:100%;text-align:right}
+.conv span{font-family:var(--mono);font-size:11px;color:var(--muted);flex:0 0 auto}
+
+#stage{display:grid;grid-template-rows:1fr auto;min-width:0;min-height:0}
+#view{position:relative;min-height:0;background:radial-gradient(120% 100% at 50% 0%,#16222A 0%,var(--ink) 68%)}
+#view canvas{display:block;width:100%;height:100%}
+#hud{position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);pointer-events:none}
+#hud b{color:var(--signal);font-weight:600}
+#legendKey{position:absolute;top:14px;right:16px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;gap:12px}
+#legendKey i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+#dock{border-top:1px solid var(--rule);background:var(--panel2);display:flex;align-items:stretch}
+#plan{padding:14px 16px;border-right:1px solid var(--rule);flex:0 0 auto;display:flex;flex-direction:column;align-items:center}
+#plan canvas{display:block;width:184px;height:184px}
+#planlbl{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:6px;text-align:center}
+#planCtl{display:flex;gap:6px;margin-top:8px;align-items:center}
+#spec{flex:1;padding:14px 18px;display:flex;flex-direction:column;min-width:0}
+#grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:14px 18px;flex:1}
+.m .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.m .v{font-family:var(--mono);font-size:19px;font-weight:600;margin-top:3px;letter-spacing:-.02em}
+.m .u{font-size:11px;color:var(--muted);font-weight:400;margin-left:2px}
+.m.warn .v{color:var(--amber)}
+.m.bad .v{color:var(--bad)}
+
+#foot{display:flex;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--rule);flex-wrap:wrap}
+#note{font-family:var(--mono);font-size:10.5px;color:var(--muted);line-height:1.5;flex:1;min-width:200px}
+#note.warn{color:var(--amber)} #note.bad{color:var(--bad)}
+button{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  border:1px solid var(--rule);background:var(--panel);color:var(--text);
+  padding:10px 15px;border-radius:5px;cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--signal);color:var(--signal)}
+#dl{background:var(--amber);border-color:var(--amber);color:#1A1206}
+#dl:hover{background:#F2B355;border-color:#F2B355;color:#1A1206}
+.mini{padding:5px 9px;font-size:10px}
+#subfoot{display:flex;justify-content:flex-end;gap:14px;margin-top:6px;align-items:center}
+
+.seg{display:flex;gap:0;border:1px solid var(--rule);border-radius:5px;overflow:hidden;width:fit-content}
+.seg button{border:0;border-radius:0;padding:6px 13px;font-size:10.5px;background:transparent;color:var(--muted)}
+.seg button.active{background:var(--signal);color:#06222E}
+.seg button:hover{color:var(--signal)}
+.seg button.active:hover{color:#06222E}
+#modeSw{margin-top:10px}
+.seg.small button{padding:4px 9px;font-size:9.5px}
+body.basic-mode .adv{display:none!important}
+.linkbtn{font-family:var(--mono);font-size:10.5px;color:var(--signal);cursor:pointer;background:none;border:0;padding:0;text-decoration:underline;letter-spacing:0;text-transform:none;font-weight:400}
+.linkbtn:hover{color:var(--text);border:0}
+.qtip{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;
+  border-radius:50%;border:1px solid var(--muted);background:transparent;color:var(--muted);
+  font-family:var(--mono);font-size:9px;line-height:1;cursor:help;margin-left:6px;padding:0;
+  flex:0 0 auto;vertical-align:middle;letter-spacing:0}
+.qtip:hover,.qtip:focus-visible{border-color:var(--signal);color:var(--signal);outline:none}
+legend .qtip{margin-left:8px;transform:translateY(-1px)}
+#qtipPop{position:fixed;max-width:250px;background:#0F1B22;border:1px solid var(--rule);border-radius:6px;
+  padding:9px 11px;font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--muted);line-height:1.5;
+  text-transform:none;letter-spacing:normal;z-index:200;opacity:0;pointer-events:none;
+  transition:opacity .1s ease;box-shadow:0 8px 22px rgba(0,0,0,.45)}
+#qtipPop.show{opacity:1}
+.matnote{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.5;margin:-2px 0 12px;padding:8px 10px;background:var(--panel2);border:1px solid var(--rule);border-radius:5px}
+
+@media (max-width:900px){
+  body{grid-template-columns:1fr;grid-template-rows:auto minmax(320px,1fr);overflow:auto;height:auto;min-height:100%}
+  #panel{max-height:46vh} #dock{flex-direction:column}
+  #plan{border-right:0;border-bottom:1px solid var(--rule);align-self:center}
+  #stage{min-height:620px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="qtipPop" role="tooltip"></div>
+
+<div id="panel">
+  <div id="phead">
+    <h1>Gear Designer</h1>
+    <div class="sub">RC gears · involute · STL + STEP</div>
+    <div id="modeSw" class="seg">
+      <button type="button" id="modeBasicBtn">Basic</button>
+      <button type="button" id="modeAdvBtn" class="active">Advanced</button>
+    </div>
+  </div>
+  <div id="pbody">
+
+    <fieldset>
+      <legend>Preset<button type="button" class="qtip" data-tip="A full parameter bundle -- tooth system, gear sizes, hub and material. Loads over whatever you have set now. Sizes are typical RC-hobby values; confirm against your own motor shaft and mount before printing.">?</button></legend>
+      <select id="preset"></select>
+      <div class="hint" id="presetDesc" style="margin:8px 0 4px"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Setup</legend>
+      <div class="row"><label>Mode<button type="button" class="qtip" data-tip="Single gear designs one part. Mesh pair designs a pinion and the gear it drives together, and checks the centre distance and how smoothly the teeth hand over contact.">?</button></label>
+        <div class="ctl"><div class="seg small" id="pairSw"><button type="button" data-v="single" class="active">Single gear</button><button type="button" data-v="mesh">Mesh pair</button></div></div></div>
+      <input type="hidden" id="mode" value="single">
+      <div class="row" id="rowAType"><label>Gear type</label>
+        <div class="ctl"><select id="aType" style="width:132px"><option value="external">External</option><option value="internal">Internal (ring)</option></select></div></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Tooth system</legend>
+      <div class="row"><label>Pitch unit<button type="button" class="qtip" data-tip="Metric gears are sized by module (pitch diameter ÷ teeth, in mm). Imperial RC gears use diametral pitch (teeth per inch of pitch diameter). Switching converts the value: module = 25.4 ÷ DP.">?</button></label>
+        <div class="ctl"><select id="unit" style="width:132px"><option value="mod">Module</option><option value="dp">Diametral pitch</option></select></div></div>
+      <div class="row" id="rowM"><label>Module<button type="button" class="qtip" data-tip="Tooth size. Mod 0.8 and Mod 1.0 are common on 1/10 crawlers. At a 0.4 mm nozzle, anything under ~0.7 gets teeth only a couple of extrusion lines thick.">?</button></label>
+        <div class="ctl"><input type="range" id="m" min="0.3" max="3" step="0.05" value="0.8"><span class="val" id="mV">0.8</span></div></div>
+      <div class="row hide" id="rowDP"><label>Diametral pitch<button type="button" class="qtip" data-tip="32P ≈ Mod 0.794 -- close to, but not the same as, Mod 0.8. Fine for a quick test, but they'll bind over a full-size spur, so don't mix them.">?</button></label>
+        <div class="ctl"><select id="dp" style="width:80px"><option>24</option><option selected>32</option><option>48</option><option>64</option><option value="custom">Custom</option></select><input type="number" id="dpCustom" class="nb hide" min="8" max="128" step="1" value="32"></div></div>
+      <div class="row"><label>Pressure angle<button type="button" class="qtip" data-tip="The angle the teeth push along. 20° is standard for almost everything. Some older 48P parts use 14.5°. Both gears in a pair must match.">?</button></label>
+        <div class="ctl"><select id="alpha" style="width:80px"><option value="14.5">14.5°</option><option value="20" selected>20°</option><option value="25">25°</option></select></div></div>
+      <div class="row"><label>Tooth form<button type="button" class="qtip" data-tip="Full depth: addendum 1.0 m, dedendum 1.25 m -- the standard. Stub: 0.8 m / 1.0 m -- shorter, stockier teeth that resist snapping, at the cost of a lower contact ratio.">?</button></label>
+        <div class="ctl"><select id="form" style="width:110px"><option value="full">Full depth</option><option value="stub">Stub</option><option value="custom">Custom</option></select></div></div>
+      <div class="row adv"><label>Addendum ha*</label>
+        <div class="ctl"><input type="number" id="ha" min="0.5" max="1.2" step="0.05" value="1"></div></div>
+      <div class="row adv"><label>Dedendum hf*</label>
+        <div class="ctl"><input type="number" id="hf" min="0.7" max="1.5" step="0.05" value="1.25"></div></div>
+      <div class="row adv"><label>Root fillet ρf*<button type="button" class="qtip" data-tip="Radius of the round at the bottom of each tooth space, as a multiple of module. Bigger spreads the bending stress where teeth crack. 0.38 is the ISO standard hob.">?</button></label>
+        <div class="ctl"><input type="range" id="rho" min="0" max="0.45" step="0.01" value="0.38"><span class="val" id="rhoV">0.38</span></div></div>
+    </fieldset>
+
+    <fieldset>
+      <legend id="legA">Gear</legend>
+      <div class="row"><label>Teeth</label>
+        <div class="ctl"><input type="range" id="z1" min="6" max="200" step="1" value="11"><input type="number" class="nb" id="z1N" min="6" max="200" step="1" value="11"></div></div>
+      <div class="row" id="rowX1"><label>Profile shift<button type="button" class="qtip" data-tip="Moves the cutter outward (+) or inward (−). Positive shift thickens the tooth root and removes undercut on small pinions; it also grows the outside diameter by 2·x·m. Auto picks the smallest shift that avoids undercut.">?</button></label>
+        <div class="ctl"><button type="button" class="mini" id="autoX1">Auto</button><input type="range" id="x1" min="-0.6" max="1" step="0.01" value="0.36"><span class="val" id="x1V">0.36</span></div></div>
+      <div class="row"><label>Face width<button type="button" class="qtip" data-tip="Tooth length along the shaft, in mm. Wider is stronger and wears slower; for printed gears 8-10× the module is a good starting point.">?</button></label>
+        <div class="ctl"><input type="range" id="b1" min="2" max="30" step="0.5" value="8"><span class="val" id="b1V">8</span></div></div>
+      <div class="row adv" id="rowTrunc1"><label>Tip truncation<button type="button" class="qtip" data-tip="Trims the tooth tips (as a fraction of module) to take off a pointed or fragile tip. Reduces the outside diameter by twice this amount and slightly shortens contact.">?</button></label>
+        <div class="ctl"><input type="range" id="trunc1" min="0" max="0.3" step="0.01" value="0"><span class="val" id="trunc1V">0</span></div></div>
+      <div class="row hide" id="rowWallA"><label>Ring wall<button type="button" class="qtip" data-tip="Plastic outside the ring's tooth roots, in mm. The ring's outer diameter is the root diameter plus twice this.">?</button></label>
+        <div class="ctl"><input type="range" id="wallA" min="1.5" max="20" step="0.5" value="4"><span class="val" id="wallAV">4</span></div></div>
+    </fieldset>
+
+    <fieldset id="fsB" class="hide">
+      <legend>Gear B · driven</legend>
+      <div class="row"><label>Gear type<button type="button" class="qtip" data-tip="External: a normal spur the pinion drives from outside. Internal: a ring gear the pinion runs inside, as in a planetary stage. Internal rings are fixed at zero profile shift in this version.">?</button></label>
+        <div class="ctl"><select id="bType" style="width:132px"><option value="external">External</option><option value="internal">Internal (ring)</option></select></div></div>
+      <div class="row"><label>Teeth</label>
+        <div class="ctl"><input type="range" id="z2" min="8" max="300" step="1" value="56"><input type="number" class="nb" id="z2N" min="8" max="300" step="1" value="56"></div></div>
+      <div class="row" id="rowX2"><label>Profile shift</label>
+        <div class="ctl"><button type="button" class="mini" id="autoX2">Auto</button><input type="range" id="x2" min="-0.6" max="1" step="0.01" value="0"><span class="val" id="x2V">0</span></div></div>
+      <div class="row"><label>Face width</label>
+        <div class="ctl"><input type="range" id="b2" min="2" max="30" step="0.5" value="7"><span class="val" id="b2V">7</span></div></div>
+      <div class="row" id="rowBoreB"><label>Bore Ø</label>
+        <div class="ctl"><select id="boreB" style="width:110px"><option value="2">2 mm</option><option value="2.3">2.3 mm</option><option value="3">3 mm</option><option value="3.175">3.175 (1/8")</option><option value="4">4 mm</option><option value="5" selected>5 mm</option><option value="6">6 mm</option><option value="8">8 mm</option></select></div></div>
+      <div class="row" id="rowWebB"><label class="sw"><input type="checkbox" id="webB" checked> Web + lightening holes</label><button type="button" class="qtip" data-tip="Thins the middle of a big spur to a web with round cut-outs -- less plastic and print time, same tooth rim. Uses the web settings under Hub & bore. Only applied when the gear is big enough (root Ø ≥ 30 mm).">?</button></div>
+      <div class="row hide" id="rowWallB"><label>Ring wall</label>
+        <div class="ctl"><input type="range" id="wallB" min="1.5" max="20" step="0.5" value="4"><span class="val" id="wallBV">4</span></div></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Helix</legend>
+      <div class="row"><label>Helix angle<button type="button" class="qtip" data-tip="0° is a straight-cut spur. Angled teeth engage gradually, so the mesh runs quieter and smoother -- but they push the gears apart along the shaft.">?</button></label>
+        <div class="ctl"><input type="range" id="beta" min="0" max="45" step="1" value="0"><span class="val" id="betaV">0°</span></div></div>
+      <div class="row" id="rowHand"><label>Hand</label>
+        <div class="ctl"><select id="hand" style="width:90px"><option value="R">Right</option><option value="L">Left</option></select></div></div>
+      <div class="hint" id="handHint"></div>
+      <div class="row" id="rowHerring"><label class="sw"><input type="checkbox" id="herring"> Herringbone</label><button type="button" class="qtip" data-tip="Twists one way to mid-face and back. The two halves cancel each other's axial thrust, and it still prints flat without supports.">?</button></div>
+      <div class="row adv" id="rowSlices"><label>Slices<button type="button" class="qtip" data-tip="How many steps the twist is built from. Auto uses one slice per ~3° of twist. More is smoother but makes bigger files.">?</button></label>
+        <div class="ctl"><input type="range" id="slices" min="0" max="64" step="1" value="0"><span class="val" id="slicesV">auto</span></div></div>
+    </fieldset>
+
+    <fieldset id="fsHub">
+      <legend id="legHub">Hub &amp; bore</legend>
+      <div class="row"><label>Bore Ø<button type="button" class="qtip" data-tip="Shaft hole. 3.175 mm is a 1/8&quot; motor shaft (most 540/550 motors); 5 mm suits many brushless crawler motors.">?</button></label>
+        <div class="ctl"><select id="bore" style="width:110px"><option value="2">2 mm</option><option value="2.3">2.3 mm</option><option value="3">3 mm</option><option value="3.175">3.175 (1/8")</option><option value="4">4 mm</option><option value="5">5 mm</option><option value="custom">Custom</option></select><input type="number" id="boreCustom" class="nb hide" min="1" max="20" step="0.05" value="3.5"></div></div>
+      <div class="row adv"><label>Bore compensation<button type="button" class="qtip" data-tip="Added to the modelled hole, because printed holes come out undersized. 0.1-0.2 mm is typical at 0.4 mm nozzle; tune it with the calibration preset.">?</button></label>
+        <div class="ctl"><input type="range" id="boreComp" min="0" max="0.4" step="0.01" value="0.15"><span class="val" id="boreCompV">0.15</span></div></div>
+      <div class="row" id="rowHub"><label class="sw"><input type="checkbox" id="hub"> Hub</label><button type="button" class="qtip" data-tip="A collar on top of the gear that gives a set screw something to bite into. It has to fit inside the tooth roots, so small pinions get a slim hub.">?</button></div>
+      <div class="row" id="rowHubD"><label>Hub Ø</label>
+        <div class="ctl"><input type="range" id="hubD" min="3" max="40" step="0.1" value="6.2"><span class="val" id="hubDV">6.2</span></div></div>
+      <div class="row" id="rowHubL"><label>Hub length</label>
+        <div class="ctl"><input type="range" id="hubL" min="1" max="15" step="0.5" value="4"><span class="val" id="hubLV">4</span></div></div>
+      <div class="row" id="rowScrew"><label>Set screw<button type="button" class="qtip" data-tip="A radial clearance hole through the hub wall, centred on the hub height. Needs a hub at least the screw's diameter + 1.2 mm long.">?</button></label>
+        <div class="ctl"><select id="screw" style="width:90px"><option value="0">None</option><option value="2.2">M2</option><option value="2.7">M2.5</option><option value="3.2">M3</option></select></div></div>
+      <div class="row adv" id="rowWeb"><label>Body<button type="button" class="qtip" data-tip="Web + holes thins the middle of a large gear to a flat web sitting on the bed, with round lightening holes. Only offered once the root diameter reaches 30 mm.">?</button></label>
+        <div class="ctl"><select id="web" style="width:120px"><option value="solid">Solid</option><option value="web">Web + holes</option></select></div></div>
+      <div class="row adv" id="rowWebT"><label>Web thickness</label>
+        <div class="ctl"><input type="range" id="webT" min="1.2" max="20" step="0.1" value="3"><span class="val" id="webTV">3</span></div></div>
+      <div class="row adv" id="rowHoles"><label>Holes</label>
+        <div class="ctl"><input type="range" id="holes" min="3" max="8" step="1" value="5"><span class="val" id="holesV">5</span></div></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Fit &amp; print</legend>
+      <div class="row"><label>Backlash per flank<button type="button" class="qtip" data-tip="Thins every tooth flank by this much (mm, along the pitch circle) so printed gears don't bind. FDM gears typically want 0.08-0.15 mm per flank.">?</button></label>
+        <div class="ctl"><input type="range" id="j" min="0" max="0.3" step="0.01" value="0.1"><span class="val" id="jV">0.10</span></div></div>
+      <div class="row adv" id="rowCd"><label>Centre-distance adjust<button type="button" class="qtip" data-tip="Moves Gear B away from (+) or toward (−) the pinion in the preview and readout -- a quick way to see how much play a slotted motor mount gives you.">?</button></label>
+        <div class="ctl"><input type="range" id="cdAdj" min="-0.3" max="0.5" step="0.01" value="0"><span class="val" id="cdAdjV">0.00</span></div></div>
+      <div class="row"><label>Bottom chamfer<button type="button" class="qtip" data-tip="45° chamfer on the bed-side tooth edges. Elephant's foot on the first layers is the single biggest reason printed gears bind -- this takes it out. Narrow tooth tips fold the chamfer to a point automatically.">?</button></label>
+        <div class="ctl"><input type="range" id="chamB" min="0" max="0.8" step="0.05" value="0.4"><span class="val" id="chamBV">0.40</span></div></div>
+      <div class="row adv"><label>Top chamfer</label>
+        <div class="ctl"><input type="range" id="chamT" min="0" max="0.8" step="0.05" value="0.2"><span class="val" id="chamTV">0.20</span></div></div>
+      <div class="row adv"><label>Profile resolution<button type="button" class="qtip" data-tip="Points per tooth flank on export. 16 is smooth well beyond what a 0.4 mm nozzle can reproduce; raise it for resin prints or CAD work. The preview may use fewer on big gears to stay responsive.">?</button></label>
+        <div class="ctl"><input type="range" id="res" min="8" max="40" step="1" value="16"><span class="val" id="resV">16</span></div></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Material &amp; printing</legend>
+      <div class="row"><label>Filament</label>
+        <div class="ctl"><select id="material" style="width:120px">
+          <option value="PLA">PLA</option><option value="PETG" selected>PETG</option><option value="ABS">ABS</option>
+          <option value="ASA">ASA</option><option value="NYLON">Nylon</option><option value="PC">Polycarbonate</option><option value="TPU">TPU (flexible)</option>
+        </select></div></div>
+      <div id="matNote" class="matnote">—</div>
+      <div class="row"><label>Nozzle diameter<button type="button" class="qtip" data-tip="Tooth thickness is checked in whole extrusion lines. The readout flags teeth thinner than your nozzle can lay down cleanly.">?</button></label>
+        <div class="ctl"><select id="nozzle" style="width:108px"><option value="0.4" selected>0.4 mm</option><option value="0.6">0.6 mm</option><option value="0.8">0.8 mm</option><option value="1.0">1.0 mm</option></select></div></div>
+      <div class="row adv"><label>Infill<button type="button" class="qtip" data-tip="Feeds the mass estimate only -- doesn't change the exported geometry (the STL is the solid outer shape either way; infill is chosen in your slicer). Gears want 3+ perimeters so the teeth print solid; infill then only fills the hub.">?</button></label>
+        <div class="ctl"><input type="range" id="infill" min="10" max="100" step="5" value="40"><span class="val" id="infillV">40%</span></div></div>
+    </fieldset>
+
+    <fieldset class="adv">
+      <legend>Unit converter</legend>
+      <div class="conv"><input type="number" id="cvMM" value="25.4" step="0.1"><span>mm</span><span style="color:var(--signal)">=</span><input type="number" id="cvIN" value="1" step="0.001"><span>in</span></div>
+      <div class="conv"><input type="number" id="cvMod" value="0.79375" step="0.01"><span>mod</span><span style="color:var(--signal)">=</span><input type="number" id="cvDP" value="32" step="1"><span>DP</span></div>
+    </fieldset>
+
+  </div>
+</div>
+
+<div id="stage">
+  <div id="view"><div id="hud">Drag to orbit · scroll to zoom · <b id="hudtype">spur</b></div>
+    <div id="legendKey" class="hide"><span><i style="background:var(--amber)"></i>Gear A</span><span><i style="background:var(--signal)"></i>Gear B</span></div></div>
+  <div id="dock">
+    <div id="plan"><canvas id="planc" width="368" height="368"></canvas><div id="planlbl">Plan view · profile</div>
+      <div id="planCtl">
+        <div class="seg small hide" id="focusSw"><button type="button" data-v="A" class="active">Gear A</button><button type="button" data-v="B">Gear B</button></div>
+        <button type="button" class="mini adv" id="animBtn">Animate</button>
+      </div>
+    </div>
+    <div id="spec">
+      <div id="grid">
+        <div class="m" id="tPitch"><div class="k">Pitch Ø</div><div class="v"><span>—</span><span class="u">mm</span></div></div>
+        <div class="m" id="tOut"><div class="k">Outside Ø</div><div class="v"><span>—</span><span class="u">mm</span></div></div>
+        <div class="m" id="tRoot"><div class="k">Root Ø</div><div class="v"><span>—</span><span class="u">mm</span></div></div>
+        <div class="m" id="tBase"><div class="k">Base Ø</div><div class="v"><span>—</span><span class="u">mm</span></div></div>
+        <div class="m" id="tTip"><div class="k">Tip land</div><div class="v"><span>—</span><span class="u">mm</span></div></div>
+        <div class="m" id="tRootT"><div class="k">Root thickness</div><div class="v"><span>—</span><span class="u">lines</span></div></div>
+        <div class="m hide" id="tRatio"><div class="k">Ratio</div><div class="v"><span>—</span><span class="u">: 1</span></div></div>
+        <div class="m hide" id="tCd"><div class="k">Centre dist.</div><div class="v"><span>—</span><span class="u">mm</span></div></div>
+        <div class="m hide" id="tEps"><div class="k">Contact ratio</div><div class="v"><span>—</span><span class="u"></span></div></div>
+        <div class="m" id="tMass"><div class="k">Est. mass</div><div class="v"><span>—</span><span class="u">g</span></div></div>
+        <div class="m" id="tTri"><div class="k">Triangles</div><div class="v"><span>—</span><span class="u"></span></div></div>
+      </div>
+      <div id="foot">
+        <div id="note" aria-live="polite">Set your gear, then export.</div>
+        <button id="reset" type="button">Reset</button>
+        <button id="dlStep" type="button">Export STEP</button>
+        <button id="dl" type="button">Export STL</button>
+      </div>
+      <div id="subfoot"><button type="button" class="linkbtn hide" id="dlBoth">Export both gears (STL)</button><button id="saveLink" type="button" class="linkbtn">Copy link to this build</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   GEAR CORE -- pure geometry, no DOM.
+   params -> {mesh, outline, metrics}. Shared by the page and the
+   node test harness (module.exports at the bottom).
+
+   Tooth profiles are generated the way a hob cuts them: a straight-
+   sided rack cutter (with a rounded tip corner) rolls on the pitch
+   circle, and every point of the cutter outline is mapped to the one
+   gear position where its normal passes through the pitch point.
+   That single rule yields the involute flank, the trochoid root
+   fillet and any undercut in one pass; the loop the undercut makes
+   is then trimmed away.
+
+   Unlike the older tools (additive overlapping solids), everything
+   here is built as ONE watertight manifold with shared vertices, so
+   the STEP writer can turn it into a valid solid B-rep.
+   ============================================================ */
+"use strict";
+const GearCore = (function () {
+  const TAU = Math.PI * 2;
+  const inv = a => Math.tan(a) - a;
+  function invInverse(v) {
+    if (v <= 0) return 0;
+    let a = Math.cbrt(3 * v);
+    for (let i = 0; i < 50; i++) {
+      const t = Math.tan(a), f = t - a - v, df = t * t;
+      if (df < 1e-15) break;
+      const da = f / df; a -= da; if (a <= 0) a = 1e-6;
+      if (Math.abs(da) < 1e-15) break;
+    }
+    return a;
+  }
+
+  /* ---------- tooth system ---------- */
+  function toothSystem(p) {
+    const mn = p.m, an = p.alpha * Math.PI / 180, beta = (p.beta || 0) * Math.PI / 180;
+    const at = Math.atan(Math.tan(an) / Math.cos(beta));
+    return { mn, an, beta, at, mt: mn / Math.cos(beta), ha: p.ha, hf: p.hf, rho: p.rho };
+  }
+  function xMin(sys, z) { return sys.ha - z * Math.sin(sys.at) ** 2 / (2 * Math.cos(sys.beta)); }
+
+  /* analytic transverse arc tooth thickness of an external, rack-generated tooth at radius r */
+  function thicknessAt(sys, z, x, j, r) {
+    const R = z * sys.mt / 2, rb = R * Math.cos(sys.at);
+    const s0 = sys.mt * Math.PI / 2 + 2 * x * sys.mn * Math.tan(sys.at) - 2 * j;
+    const rr = Math.max(r, rb);
+    const ar = Math.acos(Math.min(1, rb / rr));
+    return 2 * rr * (s0 / (2 * R) + inv(sys.at) - inv(ar));
+  }
+
+  function meshCalc(sys, z1, x1, z2, x2, internal) {
+    const A = sys.at, tn = Math.tan(sys.an);
+    let invw, a0;
+    if (!internal) { invw = inv(A) + 2 * tn * (x1 + x2) / (z1 + z2); a0 = sys.mt * (z1 + z2) / 2; }
+    else { invw = inv(A) + 2 * tn * (x2 - x1) / (z2 - z1); a0 = sys.mt * (z2 - z1) / 2; }
+    const aw_ang = invInverse(invw);
+    const aw = a0 * Math.cos(A) / Math.cos(aw_ang);
+    const k = internal ? 0 : Math.max(0, (x1 + x2) - (aw - a0) / sys.mn);
+    return { alphaW: aw_ang, aw, a0, k, ratio: z2 / z1 };
+  }
+  function contactRatio(sys, ra1, rb1, ra2, rb2, aw, alphaW, internal) {
+    const pb = Math.PI * sys.mt * Math.cos(sys.at);
+    const t1 = Math.sqrt(Math.max(0, ra1 * ra1 - rb1 * rb1)), t2 = Math.sqrt(Math.max(0, ra2 * ra2 - rb2 * rb2));
+    return internal ? (t1 - t2 + aw * Math.sin(alphaW)) / pb : (t1 + t2 - aw * Math.sin(alphaW)) / pb;
+  }
+
+  /* ---------- 2D helpers ---------- */
+  function segInt(p, q, r, s) {
+    const d1x = q[0] - p[0], d1y = q[1] - p[1], d2x = s[0] - r[0], d2y = s[1] - r[1];
+    const den = d1x * d2y - d1y * d2x;
+    if (Math.abs(den) < 1e-18) return null;
+    const t = ((r[0] - p[0]) * d2y - (r[1] - p[1]) * d2x) / den;
+    const u = ((r[0] - p[0]) * d1y - (r[1] - p[1]) * d1x) / den;
+    if (t > 1e-9 && t < 1 - 1e-9 && u > 1e-9 && u < 1 - 1e-9) return [p[0] + t * d1x, p[1] + t * d1y];
+    return null;
+  }
+  function removeLoops(P) {
+    for (let guard = 0; guard < 50; guard++) {
+      let hit = null;
+      outer: for (let i = 0; i < P.length - 3; i++) {
+        for (let j = P.length - 2; j >= i + 2; j--) {
+          const q = segInt(P[i], P[i + 1], P[j], P[j + 1]);
+          if (q) { hit = [i, j, q]; break outer; }
+        }
+      }
+      if (!hit) break;
+      const [i, j, q] = hit;
+      P = P.slice(0, i + 1).concat([q], P.slice(j + 1));
+    }
+    return P;
+  }
+  function dedupe(P, eps) {
+    const out = [P[0]];
+    for (let i = 1; i < P.length; i++) {
+      const a = out[out.length - 1], b = P[i];
+      if (Math.hypot(a[0] - b[0], a[1] - b[1]) > eps) out.push(b);
+    }
+    return out;
+  }
+  function polyArea(P) { let a = 0; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; }
+
+  /* ---------- rack generation of one half tooth-space ----------
+     Returns points in a frame where the tooth space is centred on +y;
+     this half lies at x >= 0, running from the root centre to rTip. */
+  function halfSpace(sys, z, x, j, haC, hfC, rhoC, rTip, res) {
+    const R = z * sys.mt / 2, A = sys.at, tA = Math.tan(A), cA = Math.cos(A), sA = Math.sin(A), mn = sys.mn;
+    const c = Math.PI * sys.mt / 4 + j;            // cutter half-width at its reference line
+    const hCut = hfC * mn;                          // cutter tip depth below reference line
+    const rhoMax = Math.max(0, (c - hCut * tA) / (1 / cA - tA));
+    let rho = Math.min(rhoC * mn, rhoMax * 0.999);
+    rho = Math.max(rho, Math.min(0.03 * mn, rhoMax * 0.999));
+    const wc = hCut - rho, uc = Math.max(0, c - wc * tA - rho / cA);
+    const pts = [];
+    const nTip = Math.max(1, res.tip | 0);
+    if (uc > 1e-7) for (let i = 0; i < nTip; i++) pts.push([uc * i / nTip, hCut, 0, 1]);
+    const nF = Math.max(2, res.fillet | 0);
+    for (let i = 0; i <= nF; i++) {
+      const t = Math.PI / 2 - (Math.PI / 2 - A) * i / nF;
+      pts.push([uc + rho * Math.cos(t), wc + rho * Math.sin(t), Math.cos(t), Math.sin(t)]);
+    }
+    const wT = wc + rho * sA, wEnd = -(haC + 2.5 + Math.abs(x)) * mn;
+    const nFl = Math.max(6, (res.flank | 0) * 3);
+    for (let i = 1; i <= nFl; i++) { const w = wT + (wEnd - wT) * i / nFl; pts.push([c - w * tA, w, cA, sA]); }
+
+    let out = [];
+    for (const [u, w, nu, nw] of pts) {
+      const Y = R + x * mn - w;
+      const phi = (-(Y - R) * nu / nw - u) / R;
+      const X = u + R * phi, cp = Math.cos(phi), sp = Math.sin(phi);
+      out.push([cp * X - sp * Y, sp * X + cp * Y]);
+    }
+    // gear-frame: space centred on +y, this half at x>0
+    out = dedupe(out, 1e-7 * mn);
+    out = removeLoops(out);
+    // clip at tip radius
+    const clipped = [out[0]];
+    for (let i = 1; i < out.length; i++) {
+      const a = out[i - 1], b = out[i], rb_ = Math.hypot(b[0], b[1]);
+      if (rb_ >= rTip) {
+        let lo = 0, hi = 1;
+        for (let k = 0; k < 50; k++) { const mid = (lo + hi) / 2; const px = a[0] + (b[0] - a[0]) * mid, py = a[1] + (b[1] - a[1]) * mid; if (Math.hypot(px, py) < rTip) lo = mid; else hi = mid; }
+        const t = (lo + hi) / 2, px = a[0] + (b[0] - a[0]) * t, py = a[1] + (b[1] - a[1]) * t, s = rTip / Math.hypot(px, py);
+        clipped.push([px * s, py * s]);
+        break;
+      }
+      clipped.push(b);
+    }
+    return dedupe(clipped, 2e-4 * mn);
+  }
+
+  /* space half-angle delta(r): max over crossings (widest space = thinnest tooth) */
+  function spaceHalfAngle(H, r) {
+    let best = null;
+    for (let i = 1; i < H.length; i++) {
+      const a = H[i - 1], b = H[i], ra = Math.hypot(a[0], a[1]), rb = Math.hypot(b[0], b[1]);
+      if ((ra - r) * (rb - r) <= 0 && ra !== rb) {
+        const t = (r - ra) / (rb - ra), px = a[0] + (b[0] - a[0]) * t, py = a[1] + (b[1] - a[1]) * t;
+        const d = Math.atan2(px, py);
+        if (best === null || d > best) best = d;
+      }
+    }
+    return best;
+  }
+
+  /* full CCW outline from the half space (space k centred at pi/2 + k*2pi/z) */
+  function assembleOutline(H, z, rTip, nLand) {
+    const pa = TAU / z;
+    const pol = H.map(p => [Math.hypot(p[0], p[1]), Math.atan2(p[0], p[1])]);
+    const dT = pol[pol.length - 1][1];
+    const land = pa - 2 * dT;
+    const nL = land > 1e-4 ? nLand : 0;
+    const pts = [], rootIdx = [];
+    for (let k = 0; k < z; k++) {
+      const psi = Math.PI / 2 + k * pa;
+      for (let i = pol.length - 1; i >= 0; i--) {
+        if (i === 0) rootIdx.push(pts.length);
+        const [r, d] = pol[i]; pts.push([r * Math.cos(psi - d), r * Math.sin(psi - d)]);
+      }
+      for (let i = 1; i < pol.length; i++) { const [r, d] = pol[i]; pts.push([r * Math.cos(psi + d), r * Math.sin(psi + d)]); }
+      for (let l = 1; l <= nL; l++) { const a = psi + dT + land * l / (nL + 1); pts.push([rTip * Math.cos(a), rTip * Math.sin(a)]); }
+    }
+    return { pts, rootIdx, perTooth: pts.length / z };
+  }
+
+  /* vertex-normal offset of a CCW polygon; d>0 = outward */
+  function offsetPoly(P, d) {
+    if (!d) return P.map(p => [p[0], p[1]]);
+    const n = P.length, out = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const a = P[(i + n - 1) % n], b = P[i], c = P[(i + 1) % n];
+      let e1x = b[0] - a[0], e1y = b[1] - a[1], e2x = c[0] - b[0], e2y = c[1] - b[1];
+      const l1 = Math.hypot(e1x, e1y) || 1, l2 = Math.hypot(e2x, e2y) || 1;
+      const n1x = e1y / l1, n1y = -e1x / l1, n2x = e2y / l2, n2y = -e2x / l2;
+      let den = 1 + n1x * n2x + n1y * n2y; if (den < 0.25) den = 0.25; // miter limit ~2x
+      out[i] = [b[0] + d * (n1x + n2x) / den, b[1] + d * (n1y + n2y) / den];
+    }
+    return out;
+  }
+  function selfIntersectsWindow(P, i0, i1) {
+    const n = P.length, idx = [];
+    for (let i = i0; i <= i1; i++) idx.push(((i % n) + n) % n);
+    for (let a = 0; a < idx.length - 1; a++) for (let b = a + 2; b < idx.length - 1; b++) {
+      if (segInt(P[idx[a]], P[idx[a + 1]], P[idx[b]], P[idx[b + 1]])) return true;
+    }
+    return false;
+  }
+  /* a big chamfer can fold a narrow tooth tip over itself (a "swallowtail").
+     Collapse each fold to its crossing point -- same vertex count, so layers
+     still stitch 1:1; the duplicate points just drop degenerate triangles. */
+  function collapseFolds(P, O) {
+    const n = P.length, z = O.rootIdx.length;
+    for (let k = 0; k < z; k++) {
+      const s = O.rootIdx[k], e = O.rootIdx[(k + 1) % z] + (k === z - 1 ? n : 0);
+      for (let guard = 0; guard < 8; guard++) {
+        let hit = null;
+        search: for (let a = s; a < e - 2; a++) for (let b = e - 1; b >= a + 2; b--) {
+          const q = segInt(P[a % n], P[(a + 1) % n], P[b % n], P[(b + 1) % n]);
+          if (q) { hit = [a, b, q]; break search; }
+        }
+        if (!hit) break;
+        const [a, b, q] = hit;
+        for (let i = a + 1; i <= b; i++) P[i % n] = [q[0], q[1]];
+      }
+    }
+    return P;
+  }
+  function safeOffset(O, d) {
+    let dd = d;
+    for (let k = 0; k < 6 && Math.abs(dd) > 1e-4; k++) {
+      const P = collapseFolds(offsetPoly(O.pts, dd), O);
+      const i0 = O.rootIdx[0] - 4, i1 = O.rootIdx[Math.min(2, O.rootIdx.length - 1)] + 4 + (O.rootIdx.length < 3 ? O.perTooth : 0);
+      if (!selfIntersectsWindow(P, i0, i1)) return { pts: P, d: dd };
+      dd /= 2;
+    }
+    return { pts: O.pts.map(p => [p[0], p[1]]), d: 0 };
+  }
+
+  /* ---------- triangulation (ear clipping with hole bridging) ---------- */
+  function cross(a, b, c) { return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]); }
+  function same(a, b) { return Math.abs(a[0] - b[0]) < 1e-9 && Math.abs(a[1] - b[1]) < 1e-9; }
+  function inTri(p, a, b, c) {
+    const e = -1e-12;
+    return cross(a, b, p) >= e && cross(b, c, p) >= e && cross(c, a, p) >= e;
+  }
+  function properCross(p, q, r, s) {
+    const d1 = cross(r, s, p), d2 = cross(r, s, q), d3 = cross(p, q, r), d4 = cross(p, q, s);
+    return ((d1 > 1e-12 && d2 < -1e-12) || (d1 < -1e-12 && d2 > 1e-12)) && ((d3 > 1e-12 && d4 < -1e-12) || (d3 < -1e-12 && d4 > 1e-12));
+  }
+  function triangulate(outer, holes) {
+    let poly = outer.slice(); if (polyArea(poly) < 0) poly.reverse();
+    const hs = (holes || []).map(h => { const hh = h.slice(); if (polyArea(hh) > 0) hh.reverse(); return hh; });
+    hs.sort((a, b) => Math.max(...b.map(p => p[0])) - Math.max(...a.map(p => p[0])));
+    for (let hi = 0; hi < hs.length; hi++) {
+      const h = hs[hi];
+      let mi = 0; for (let i = 1; i < h.length; i++) if (h[i][0] > h[mi][0]) mi = i;
+      const hm = h[mi];
+      const order = poly.map((p, i) => [i, (p[0] - hm[0]) ** 2 + (p[1] - hm[1]) ** 2]).sort((a, b) => a[1] - b[1]);
+      let vi = -1;
+      for (const [i] of order) {
+        const v = poly[i]; let ok = true;
+        for (let k = 0; k < poly.length && ok; k++) { const a = poly[k], b = poly[(k + 1) % poly.length]; if (a === v || b === v) continue; if (properCross(hm, v, a, b)) ok = false; }
+        for (let r = hi; r < hs.length && ok; r++) { const H2 = hs[r]; for (let k = 0; k < H2.length && ok; k++) { const a = H2[k], b = H2[(k + 1) % H2.length]; if (a === hm || b === hm) continue; if (properCross(hm, v, a, b)) ok = false; } }
+        if (ok) { vi = i; break; }
+      }
+      if (vi < 0) vi = order[0][0];
+      const ring = h.slice(mi).concat(h.slice(0, mi));
+      poly = poly.slice(0, vi + 1).concat(ring, [hm, poly[vi]], poly.slice(vi + 1));
+    }
+    const res = []; let V = poly.slice(); let i = 0, stall = 0;
+    while (V.length > 3) {
+      const n = V.length; if (i >= n) i = 0;
+      const a = V[(i + n - 1) % n], b = V[i], c = V[(i + 1) % n];
+      let ear = cross(a, b, c) > 1e-14;
+      if (ear) for (let k = 0; k < n; k++) { const p = V[k]; if (p === a || p === b || p === c || same(p, a) || same(p, b) || same(p, c)) continue; if (inTri(p, a, b, c)) { ear = false; break; } }
+      if (ear) { res.push([a, b, c]); V.splice(i, 1); stall = 0; if (i > 0) i--; continue; }
+      i++; stall++;
+      if (stall > n) { // no ear: drop a degenerate vertex
+        let best = 0, bv = Infinity;
+        for (let k = 0; k < n; k++) { const cr = Math.abs(cross(V[(k + n - 1) % n], V[k], V[(k + 1) % n])); if (cr < bv) { bv = cr; best = k; } }
+        V.splice(best, 1); stall = 0;
+      }
+    }
+    if (V.length === 3 && cross(V[0], V[1], V[2]) > 1e-14) res.push(V);
+    return res;
+  }
+  function unwrapAngles(R) {
+    const a = R.map(p => Math.atan2(p[1], p[0]));
+    const out = [a[0]];
+    for (let i = 1; i < a.length; i++) { let v = a[i]; while (v < out[i - 1] - 1e-9) v += TAU; out.push(v); }
+    return out;
+  }
+  /* annulus between two concentric closed CCW rings -> CCW triangles */
+  function annulus(O, I) {
+    const res = [], nO = O.length, nI = I.length;
+    const norm = v => ((v % TAU) + TAU) % TAU;
+    let i0 = 0, j0 = 0;
+    for (let i = 1; i < nO; i++) if (norm(Math.atan2(O[i][1], O[i][0])) < norm(Math.atan2(O[i0][1], O[i0][0]))) i0 = i;
+    for (let j = 1; j < nI; j++) if (norm(Math.atan2(I[j][1], I[j][0])) < norm(Math.atan2(I[j0][1], I[j0][0]))) j0 = j;
+    const Os = O.slice(i0).concat(O.slice(0, i0)), Is = I.slice(j0).concat(I.slice(0, j0));
+    const aO = unwrapAngles(Os), aI = unwrapAngles(Is);
+    const base = Math.min(norm(aO[0]), norm(aI[0]));
+    const shiftO = norm(aO[0]) - aO[0], shiftI = norm(aI[0]) - aI[0];
+    const AO = k => (k < nO ? aO[k] + shiftO : aO[0] + shiftO + TAU);
+    const AI = k => (k < nI ? aI[k] + shiftI : aI[0] + shiftI + TAU);
+    void base;
+    let i = 0, j = 0;
+    while (i < nO || j < nI) {
+      const oi = Os[i % nO], oi1 = Os[(i + 1) % nO], ij = Is[j % nI], ij1 = Is[(j + 1) % nI];
+      if (j >= nI || (i < nO && AO(i + 1) <= AI(j + 1))) { res.push([oi, oi1, ij]); i++; }
+      else { res.push([oi, ij1, ij]); j++; }
+    }
+    return res;
+  }
+  function ringPts(r, n, a0) { const P = []; for (let i = 0; i < n; i++) { const a = (a0 || 0) + TAU * i / n; P.push([r * Math.cos(a), r * Math.sin(a)]); } return P; }
+  function rot2(P, th) { if (!th) return P; const c = Math.cos(th), s = Math.sin(th); return P.map(p => [c * p[0] - s * p[1], s * p[0] + c * p[1]]); }
+
+  /* ---------- indexed mesh builder ---------- */
+  class MeshB {
+    constructor() { this.V = []; this.T = []; this.map = new Map(); }
+    v(x, y, z) {
+      const k = Math.round(x * 1e6) + "," + Math.round(y * 1e6) + "," + Math.round(z * 1e6);
+      let i = this.map.get(k);
+      if (i === undefined) { i = this.V.length; this.V.push([x, y, z]); this.map.set(k, i); }
+      return i;
+    }
+    tri(a, b, c) { if (a === b || b === c || a === c) return; this.T.push(a, b, c); }
+    /* orient so the normal agrees with hint direction h (evaluated at centroid) */
+    triH(a, b, c, hintFn) {
+      const A = this.V[a], B = this.V[b], C = this.V[c];
+      const n = [(B[1] - A[1]) * (C[2] - A[2]) - (B[2] - A[2]) * (C[1] - A[1]), (B[2] - A[2]) * (C[0] - A[0]) - (B[0] - A[0]) * (C[2] - A[2]), (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0])];
+      const ce = [(A[0] + B[0] + C[0]) / 3, (A[1] + B[1] + C[1]) / 3, (A[2] + B[2] + C[2]) / 3];
+      const h = hintFn(ce);
+      if (n[0] * h[0] + n[1] * h[1] + n[2] * h[2] < 0) this.tri(a, c, b); else this.tri(a, b, c);
+    }
+    cap(tris2D, z, up) { for (const [a, b, c] of tris2D) { const ia = this.v(a[0], a[1], z), ib = this.v(b[0], b[1], z), ic = this.v(c[0], c[1], z); if (up) this.tri(ia, ib, ic); else this.tri(ia, ic, ib); } }
+    band(L0, z0, L1, z1, outward) { // two closed loops, equal count
+      const n = L0.length;
+      for (let i = 0; i < n; i++) {
+        const i1 = (i + 1) % n;
+        const a = this.v(L0[i][0], L0[i][1], z0), b = this.v(L0[i1][0], L0[i1][1], z0), c = this.v(L1[i1][0], L1[i1][1], z1), d = this.v(L1[i][0], L1[i][1], z1);
+        if (outward) { this.tri(a, b, c); this.tri(a, c, d); } else { this.tri(a, c, b); this.tri(a, d, c); }
+      }
+    }
+    positions() {
+      const out = new Float32Array(this.T.length * 3);
+      for (let t = 0; t < this.T.length; t++) { const v = this.V[this.T[t]]; out[t * 3] = v[0]; out[t * 3 + 1] = v[1]; out[t * 3 + 2] = v[2]; }
+      return out;
+    }
+  }
+
+  /* cylinder wall between two rings (same 2D ring at z0 and z1), optional radial
+     hole along +x centred at height zc, radius rs. Returns hole loop vertex ids. */
+  function cylWall(M, ring, R, z0, z1, outward, hole) {
+    const n = ring.length;
+    const hint = ce => outward ? [ce[0], ce[1], 0] : [-ce[0], -ce[1], 0];
+    if (!hole) {
+      for (let i = 0; i < n; i++) {
+        const i1 = (i + 1) % n;
+        const a = M.v(ring[i][0], ring[i][1], z0), b = M.v(ring[i1][0], ring[i1][1], z0), c = M.v(ring[i1][0], ring[i1][1], z1), d = M.v(ring[i][0], ring[i][1], z1);
+        M.triH(a, b, c, hint); M.triH(a, c, d, hint);
+      }
+      return null;
+    }
+    const W = Math.asin(Math.min(0.999, hole.rs / R));
+    const q = Math.min(Math.floor(n / 2) - 1, Math.ceil(W / (TAU / n)) + 1);
+    // quads outside the window
+    for (let i = q; i < n - q; i++) {
+      const i1 = i + 1;
+      const r0 = ring[i % n], r1 = ring[i1 % n];
+      const a = M.v(r0[0], r0[1], z0), b = M.v(r1[0], r1[1], z0), c = M.v(r1[0], r1[1], z1), d = M.v(r0[0], r0[1], z1);
+      M.triH(a, b, c, hint); M.triH(a, c, d, hint);
+    }
+    // window polygon in (s,z) param space, carrying 3D ids
+    const win = [];
+    for (let k = -q; k <= q; k++) { const p = ring[((k % n) + n) % n]; const s = R * Math.atan2(p[1], p[0]); const pt = [s, z0]; pt.id = M.v(p[0], p[1], z0); win.push(pt); }
+    for (let k = q; k >= -q; k--) { const p = ring[((k % n) + n) % n]; const s = R * Math.atan2(p[1], p[0]); const pt = [s, z1]; pt.id = M.v(p[0], p[1], z1); win.push(pt); }
+    const hl = [], ids = [];
+    for (let i = 0; i < hole.ns; i++) {
+      const ps = TAU * i / hole.ns, y = hole.rs * Math.cos(ps), zz = hole.zc + hole.rs * Math.sin(ps);
+      const x = Math.sqrt(R * R - y * y);
+      const pt = [R * Math.asin(y / R), zz]; pt.id = M.v(x, y, zz); hl.push(pt); ids.push(pt.id);
+    }
+    for (const [a, b, c] of triangulate(win, [hl])) M.triH(a.id, b.id, c.id, hint);
+    return ids;
+  }
+
+  /* ---------- gear solids ---------- */
+  function twistFn(G, sys, R) {
+    if (!sys.beta) return () => 0;
+    const k = Math.tan(sys.beta) / R * (G.hand === "L" ? -1 : 1);
+    if (G.herring) return z => k * Math.min(z, G.b - z);
+    return z => k * z;
+  }
+  function layerList(G, sys, R) {
+    const b = G.b, c0 = Math.min(G.chamB || 0, b * 0.3), c1 = Math.min(G.chamT || 0, b * 0.3);
+    let S = 1;
+    if (sys.beta) {
+      const twistDeg = Math.abs(Math.tan(sys.beta) / R * (G.herring ? b / 2 : b)) * 180 / Math.PI;
+      S = G.slices > 0 ? G.slices : Math.min(64, Math.max(4, Math.ceil(twistDeg / 3)));
+      if (G.herring && S % 2) S++;
+    }
+    const zs = new Set([0, b]);
+    for (let i = 1; i < S; i++) { const z = b * i / S; if (z > c0 + 1e-6 && z < b - c1 - 1e-6) zs.add(+z.toFixed(9)); }
+    if (c0 > 0) zs.add(c0); if (c1 > 0) zs.add(b - c1);
+    return { zs: [...zs].sort((a, b) => a - b), c0, c1 };
+  }
+
+  function buildExternal(sys, G, res) {
+    const mn = sys.mn, z = G.z, R = z * sys.mt / 2, rb = R * Math.cos(sys.at);
+    let ra = R + (sys.ha + G.x - (G.k || 0)) * mn - (G.trunc || 0);
+    const rf = R - (sys.hf - G.x) * mn;
+    const j = G.j || 0;
+    let pointed = false;
+    if (thicknessAt(sys, z, G.x, j, ra) < 0.04 * mn) {
+      pointed = true;
+      let lo = Math.max(rb, rf), hi = ra;
+      for (let k = 0; k < 60; k++) { const mid = (lo + hi) / 2; if (thicknessAt(sys, z, G.x, j, mid) > 0.04 * mn) lo = mid; else hi = mid; }
+      ra = lo;
+    }
+    if (ra <= rf + 0.05 * mn) throw new Error("degenerate");
+    const H = halfSpace(sys, z, G.x, j, sys.ha, sys.hf, sys.rho, ra, res);
+    const O = assembleOutline(H, z, ra, res.land);
+    const tw = twistFn(G, sys, R);
+    const L = layerList(G, sys, R);
+    const off0 = L.c0 ? safeOffset(O, -L.c0) : { pts: O.pts, d: 0 };
+    const off1 = L.c1 ? safeOffset(O, -L.c1) : { pts: O.pts, d: 0 };
+    const outlineAt = zz => (zz === 0 && L.c0 ? off0.pts : (Math.abs(zz - G.b) < 1e-9 && L.c1 ? off1.pts : O.pts));
+    const M = new MeshB();
+    // toothed side wall
+    for (let i = 0; i < L.zs.length - 1; i++) {
+      const za = L.zs[i], zb = L.zs[i + 1];
+      M.band(rot2(outlineAt(za), tw(za)), za, rot2(outlineAt(zb), tw(zb)), zb, true);
+    }
+    // radii of inner structure
+    const cMax = Math.max(Math.abs(off0.d), Math.abs(off1.d));
+    const rInB = rf - Math.abs(off0.d) - 0.1 * mn - 0.05, rInT = rf - Math.abs(off1.d) - 0.1 * mn - 0.05;
+    const rBore = (G.bore + (G.boreComp || 0)) / 2;
+    if (Math.min(rInB, rInT) < rBore + 0.25) { const e = new Error("bore"); e.code = "bore"; throw e; }
+    const nC = Math.max(32, Math.min(96, Math.round(rBore * 2 * Math.PI / 0.35)));
+    let hub = G.hub && G.hub.on ? G.hub : null;
+    const rHub = hub ? Math.min(hub.D / 2, rInT - 0.2) : 0;
+    const hubClamped = !!hub && rHub < hub.D / 2 - 1e-9;
+    let hubDropped = false;
+    if (hub && rHub < rBore + 0.5) { hub = null; hubDropped = true; }
+    const zTop = G.b + (hub ? hub.L : 0);
+    const M_ = res.seam || 3;
+    const pa = TAU / z;
+    const seam = (th, rIn) => { const S = []; for (let k = 0; k < z; k++) for (let i = 0; i < M_; i++) { const a = Math.PI / 2 + k * pa + i * pa / M_ + th; S.push([rIn * Math.cos(a), rIn * Math.sin(a)]); } return S; };
+    function sectors(pts, S) {
+      const tris = [], n = pts.length;
+      for (let k = 0; k < z; k++) {
+        const s = O.rootIdx[k], e = O.rootIdx[(k + 1) % z] + (k === z - 1 ? n : 0);
+        const poly = [];
+        for (let i = s; i <= e; i++) poly.push(pts[i % n]);
+        for (let i = M_; i >= 0; i--) poly.push(S[((k * M_ + i) % (z * M_))]);
+        for (const t of triangulate(poly, [])) tris.push(t);
+      }
+      return tris;
+    }
+    const pBot = rot2(outlineAt(0), tw(0)), pTop = rot2(outlineAt(G.b), tw(G.b));
+    const sBot = seam(tw(0), rInB), sTop = seam(tw(G.b), rInT);
+    M.cap(sectors(pBot, sBot), 0, false);
+    M.cap(sectors(pTop, sTop), G.b, true);
+    const bore = ringPts(rBore, nC, 0);
+    let webInfo = null;
+    const screw = hub && hub.screw > 0 && hub.L >= hub.screw + 1.2 ? { zc: G.b + hub.L / 2, rs: hub.screw / 2, ns: 20 } : null;
+    const web = G.web && G.web.on;
+    let rCore = hub ? rHub : rBore + Math.max(2.2, 1.5 * mn);
+    let rRim = rf - Math.max(2.5 * mn, 2) - cMax;
+    const webOK = web && rRim - rCore >= 3.5 && G.web.t < G.b - 0.4;
+    if (!webOK) {
+      M.cap(annulus(sBot, bore), 0, false);
+      if (hub) {
+        const hr = ringPts(rHub, Math.max(48, nC), 0);
+        M.cap(annulus(sTop, hr), G.b, true);
+        const hid = cylWall(M, hr, rHub, G.b, zTop, true, screw);
+        M.cap(annulus(hr, bore), zTop, true);
+        const bid = cylWall(M, bore, rBore, 0, zTop, false, screw);
+        if (hid && bid) tube(M, hid, bid, screw);
+      } else {
+        M.cap(annulus(sTop, bore), G.b, true);
+        cylWall(M, bore, rBore, 0, zTop, false, null);
+      }
+    } else {
+      const tw_ = Math.max(1.2, Math.min(G.web.t, G.b - 0.4));
+      const nRim = Math.max(64, z * 2), rimR = ringPts(rRim, nRim, 0);
+      const coreR = ringPts(rCore, Math.max(48, nC), 0);
+      // lightening holes
+      const nh = G.web.n, rc = (rCore + rRim) / 2;
+      const rh = Math.min((rRim - rCore) / 2 - 1.2, rc * Math.sin(Math.PI / nh) - 1.2);
+      const holes = [];
+      if (rh >= 1.2) for (let h = 0; h < nh; h++) { const a = TAU * h / nh + Math.PI / nh; const cx = rc * Math.cos(a), cy = rc * Math.sin(a); const n = Math.max(16, Math.round(rh * 2 * Math.PI / 0.5)); holes.push({ cx, cy, r: rh, pts: ringPts(rh, n, 0).map(p => [p[0] + cx, p[1] + cy]) }); }
+      // bottom: seam ring minus bore and holes
+      M.cap(triangulate(sBot, [bore].concat(holes.map(h => h.pts))), 0, false);
+      // rim top + rim inner wall
+      M.cap(annulus(sTop, rimR), G.b, true);
+      cylWall(M, rimR, rRim, tw_, G.b, false, null);
+      // web top
+      M.cap(triangulate(rimR, [coreR].concat(holes.map(h => h.pts))), tw_, true);
+      // hole walls (face toward each hole's axis)
+      for (const h of holes) {
+        const n = h.pts.length;
+        for (let i = 0; i < n; i++) {
+          const p = h.pts[i], q = h.pts[(i + 1) % n];
+          const a = M.v(p[0], p[1], 0), b = M.v(q[0], q[1], 0), c = M.v(q[0], q[1], tw_), d = M.v(p[0], p[1], tw_);
+          const hint = ce => [h.cx - ce[0], h.cy - ce[1], 0];
+          M.triH(a, b, c, hint); M.triH(a, c, d, hint);
+        }
+      }
+      const hid = cylWall(M, coreR, rCore, tw_, zTop, true, screw);
+      M.cap(annulus(coreR, bore), zTop, true);
+      const bid = cylWall(M, bore, rBore, 0, zTop, false, screw);
+      if (hid && bid) tube(M, hid, bid, screw);
+      webInfo = { rim: rRim, core: rCore, holes: holes.length, t: tw_ };
+    }
+    return {
+      M, O, H, twist: tw, R, rb, ra, rf, pointed, rBore, rIn: Math.min(rInB, rInT), rHub: hub ? rHub : 0, hubClamped, hubDropped, zTop, webInfo, screw: !!screw,
+      chamferUsed: [Math.abs(off0.d), Math.abs(off1.d)], layers: L.zs.length,
+    };
+  }
+  function tube(M, outerIds, innerIds, s) {
+    const n = outerIds.length;
+    const hint = ce => [0, -ce[1], s.zc - ce[2]];
+    for (let i = 0; i < n; i++) {
+      const i1 = (i + 1) % n;
+      M.triH(outerIds[i], outerIds[i1], innerIds[i1], hint);
+      M.triH(outerIds[i], innerIds[i1], innerIds[i], hint);
+    }
+  }
+
+  function buildInternal(sys, G, res) {
+    const mn = sys.mn, z = G.z, R = z * sys.mt / 2, rb = R * Math.cos(sys.at);
+    const j = G.j || 0;
+    let raV = R + sys.hf * mn;                         // ring root (major) radius
+    if (thicknessAt(sys, z, 0, -j, raV) < 0.04 * mn) {
+      let lo = rb, hi = raV;
+      for (let k = 0; k < 60; k++) { const mid = (lo + hi) / 2; if (thicknessAt(sys, z, 0, -j, mid) > 0.04 * mn) lo = mid; else hi = mid; }
+      raV = lo;
+    }
+    const rMin = Math.max(R - sys.ha * mn, rb + 0.2 * mn);  // ring tip (minor) radius
+    let H = halfSpace(sys, z, 0, -j, sys.hf, sys.ha, 0.1, raV, res);
+    H = dedupe(H.map(p => { const r = Math.hypot(p[0], p[1]); return r < rMin ? [p[0] * rMin / r, p[1] * rMin / r] : p; }), 2e-4 * mn);
+    const O = assembleOutline(H, z, raV, res.land);
+    const tw = twistFn(G, sys, R);
+    const L = layerList(G, sys, R);
+    const off0 = L.c0 ? safeOffset(O, +L.c0) : { pts: O.pts, d: 0 };
+    const off1 = L.c1 ? safeOffset(O, +L.c1) : { pts: O.pts, d: 0 };
+    const outlineAt = zz => (zz === 0 && L.c0 ? off0.pts : (Math.abs(zz - G.b) < 1e-9 && L.c1 ? off1.pts : O.pts));
+    const M = new MeshB();
+    for (let i = 0; i < L.zs.length - 1; i++) {
+      const za = L.zs[i], zb = L.zs[i + 1];
+      M.band(rot2(outlineAt(za), tw(za)), za, rot2(outlineAt(zb), tw(zb)), zb, false);
+    }
+    const Rout = raV + Math.max(1.2, G.wall || 3);
+    const M_ = res.seam || 3, pa = TAU / z;
+    const outer = []; for (let k = 0; k < z; k++) for (let i = 0; i < M_; i++) { const a = Math.PI / 2 + k * pa + i * pa / M_; outer.push([Rout * Math.cos(a), Rout * Math.sin(a)]); }
+    function sectors(pts) {
+      const tris = [], n = pts.length;
+      for (let k = 0; k < z; k++) {
+        const s = O.rootIdx[k], e = O.rootIdx[(k + 1) % z] + (k === z - 1 ? n : 0);
+        const poly = [];
+        for (let i = 0; i <= M_; i++) poly.push(outer[(k * M_ + i) % (z * M_)]);
+        for (let i = e; i >= s; i--) poly.push(pts[i % n]);
+        for (const t of triangulate(poly, [])) tris.push(t);
+      }
+      return tris;
+    }
+    // caps: outer ring is not twisted, so the sector seam uses a straight ring;
+    // for helical rings the sectors are built on an untwisted outline then rotated -- keep it simple:
+    // rotate the outer ring with the twist too (it's a circle, so the solid is unchanged).
+    const capAt = (zz, up) => { const th = tw(zz); const pts = rot2(outlineAt(zz), th); const saved = outer.slice(); const ro = rot2(outer, th); for (let i = 0; i < outer.length; i++) outer[i] = ro[i]; M.cap(sectors(pts), zz, up); for (let i = 0; i < outer.length; i++) outer[i] = saved[i]; return ro; };
+    const ob = capAt(0, false), ot = capAt(G.b, true);
+    // outer wall: connect ob (z=0) to ot (z=b) -- rotated copies of the same circle
+    if (!sys.beta || G.herring && Math.abs(tw(G.b)) < 1e-12) cylWall(M, ob, Rout, 0, G.b, true, null);
+    else {
+      // bottom ring and top ring differ by rotation: stitch with annulus-like merge on the cylinder
+      const n = ob.length, hint = ce => [ce[0], ce[1], 0];
+      // top ring points are the bottom ring rotated by tw(b); walk both by angle
+      const aB = unwrapAngles(ob), aT0 = Math.atan2(ot[0][1], ot[0][0]);
+      let off = aT0 - aB[0]; while (off > Math.PI) off -= TAU; while (off < -Math.PI) off += TAU;
+      // vertical-ish quads between ob[i] and ot[i] (same index = rotated by off); triangles stay valid for |off| < half a segment... general case:
+      for (let i = 0; i < n; i++) {
+        const i1 = (i + 1) % n;
+        const a = M.v(ob[i][0], ob[i][1], 0), b = M.v(ob[i1][0], ob[i1][1], 0), c = M.v(ot[i1][0], ot[i1][1], G.b), d = M.v(ot[i][0], ot[i][1], G.b);
+        M.triH(a, b, c, hint); M.triH(a, c, d, hint);
+      }
+    }
+    return { M, O, H, twist: tw, R, rb, ra: rMin, rf: raV, rMin, rMajor: raV, Rout, pointed: false, chamferUsed: [Math.abs(off0.d), Math.abs(off1.d)], layers: L.zs.length };
+  }
+
+  /* ---------- metrics ---------- */
+  function volumeArea(M) {
+    let v = 0, A = 0; const V = M.V, T = M.T;
+    for (let t = 0; t < T.length; t += 3) {
+      const a = V[T[t]], b = V[T[t + 1]], c = V[T[t + 2]];
+      v += (a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0])) / 6;
+      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], wx = c[0] - a[0], wy = c[1] - a[1], wz = c[2] - a[2];
+      A += Math.hypot(uy * wz - uz * wy, uz * wx - ux * wz, ux * wy - uy * wx) / 2;
+    }
+    return { volume: v, area: A };
+  }
+  function checkManifold(M) {
+    const E = new Map(); const T = M.T;
+    for (let t = 0; t < T.length; t += 3) for (let e = 0; e < 3; e++) {
+      const a = T[t + e], b = T[t + (e + 1) % 3];
+      const k = a < b ? a + "_" + b : b + "_" + a;
+      const s = a < b ? 1 : -1;
+      const r = E.get(k) || [0, 0]; r[0]++; r[1] += s; E.set(k, r);
+    }
+    let bad = 0; for (const [, r] of E) if (r[0] !== 2 || r[1] !== 0) bad++;
+    return { edges: E.size, badEdges: bad, ok: bad === 0 };
+  }
+
+  /* ---------- STL ---------- */
+  function buildSTL(pos, header) {
+    const tri = pos.length / 9, buf = new ArrayBuffer(84 + tri * 50), dv = new DataView(buf);
+    const hdr = (header || "gear-designer binary STL").padEnd(80).slice(0, 80);
+    for (let i = 0; i < 80; i++) dv.setUint8(i, hdr.charCodeAt(i) & 0x7f);
+    dv.setUint32(80, tri, true);
+    let o = 84;
+    for (let i = 0; i < tri; i++) {
+      const b = i * 9;
+      const ax = pos[b], ay = pos[b + 1], az = pos[b + 2], bx = pos[b + 3], by = pos[b + 4], bz = pos[b + 5], cx = pos[b + 6], cy = pos[b + 7], cz = pos[b + 8];
+      const ux = bx - ax, uy = by - ay, uz = bz - az, vx = cx - ax, vy = cy - ay, vz = cz - az;
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+      const Ln = Math.hypot(nx, ny, nz) || 1; nx /= Ln; ny /= Ln; nz /= Ln;
+      dv.setFloat32(o, nx, true); dv.setFloat32(o + 4, ny, true); dv.setFloat32(o + 8, nz, true);
+      dv.setFloat32(o + 12, ax, true); dv.setFloat32(o + 16, ay, true); dv.setFloat32(o + 20, az, true);
+      dv.setFloat32(o + 24, bx, true); dv.setFloat32(o + 28, by, true); dv.setFloat32(o + 32, bz, true);
+      dv.setFloat32(o + 36, cx, true); dv.setFloat32(o + 40, cy, true); dv.setFloat32(o + 44, cz, true);
+      dv.setUint16(o + 48, 0, true); o += 50;
+    }
+    return buf;
+  }
+
+  /* ---------- STEP (AP214), faceted solid B-rep with coplanar faces merged ---------- */
+  function buildSTEP(M, name) {
+    const V = M.V, T = M.T, nT = T.length / 3;
+    const N = new Array(nT), D = new Array(nT);
+    for (let t = 0; t < nT; t++) {
+      const a = V[T[3 * t]], b = V[T[3 * t + 1]], c = V[T[3 * t + 2]];
+      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], wx = c[0] - a[0], wy = c[1] - a[1], wz = c[2] - a[2];
+      let n = [uy * wz - uz * wy, uz * wx - ux * wz, ux * wy - uy * wx]; const l = Math.hypot(n[0], n[1], n[2]) || 1; n = [n[0] / l, n[1] / l, n[2] / l];
+      N[t] = n; D[t] = n[0] * a[0] + n[1] * a[1] + n[2] * a[2];
+    }
+    const edgeTris = new Map();
+    for (let t = 0; t < nT; t++) for (let e = 0; e < 3; e++) {
+      const a = T[3 * t + e], b = T[3 * t + (e + 1) % 3]; const k = a < b ? a + "_" + b : b + "_" + a;
+      let l = edgeTris.get(k); if (!l) { l = []; edgeTris.set(k, l); } l.push(t);
+    }
+    // group coplanar connected triangles
+    const grp = new Int32Array(nT).fill(-1); const groups = [];
+    for (let t = 0; t < nT; t++) {
+      if (grp[t] >= 0) continue;
+      const g = groups.length, list = [t]; grp[t] = g;
+      for (let q = 0; q < list.length; q++) {
+        const u = list[q];
+        for (let e = 0; e < 3; e++) {
+          const a = T[3 * u + e], b = T[3 * u + (e + 1) % 3]; const k = a < b ? a + "_" + b : b + "_" + a;
+          for (const w of edgeTris.get(k)) {
+            if (grp[w] >= 0) continue;
+            const n1 = N[t], n2 = N[w];
+            if (n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2] > 1 - 1e-10) {
+              const pw = V[T[3 * w]]; // coplanar check against seed plane
+              let ok = true;
+              for (let vv = 0; vv < 3; vv++) { const p = V[T[3 * w + vv]]; if (Math.abs(n1[0] * p[0] + n1[1] * p[1] + n1[2] * p[2] - D[t]) > 1e-6) ok = false; }
+              void pw;
+              if (ok) { grp[w] = g; list.push(w); }
+            }
+          }
+        }
+      }
+      groups.push({ tris: list, n: N[t] });
+    }
+    // boundary loops per group
+    const lines = []; let id = 0; const E = s => { id++; lines.push("#" + id + "=" + s + ";"); return id; };
+    const f = v => { const s = (Math.abs(v) < 5e-7 ? 0 : v).toFixed(6); return s === "-0.000000" ? "0.000000" : s; };
+    const ptId = new Map(), vxId = new Map();
+    const cp = i => { let r = ptId.get(i); if (!r) { const p = V[i]; r = E(`CARTESIAN_POINT('',(${f(p[0])},${f(p[1])},${f(p[2])}))`); ptId.set(i, r); } return r; };
+    const vp = i => { let r = vxId.get(i); if (!r) { r = E(`VERTEX_POINT('',#${cp(i)})`); vxId.set(i, r); } return r; };
+    const dir = (x, y, z) => { const l = Math.hypot(x, y, z) || 1; return E(`DIRECTION('',(${f(x / l)},${f(y / l)},${f(z / l)}))`); };
+    const ecMap = new Map();
+    const edgeCurve = (a, b) => {
+      const k = a < b ? a + "_" + b : b + "_" + a;
+      let r = ecMap.get(k);
+      if (!r) {
+        const A = V[a], B = V[b], dx = B[0] - A[0], dy = B[1] - A[1], dz = B[2] - A[2], L = Math.hypot(dx, dy, dz);
+        const ln = E(`LINE('',#${cp(a)},#${E(`VECTOR('',#${dir(dx, dy, dz)},${f(L)})`)})`);
+        r = { id: E(`EDGE_CURVE('',#${vp(a)},#${vp(b)},#${ln},.T.)`), a, b, uses: 0 };
+        ecMap.set(k, r);
+      }
+      r.uses++;
+      return r;
+    };
+    // header entities first
+    const ctxLines = [];
+    const faceIds = [];
+    let loopsTotal = 0;
+    for (const g of groups) {
+      const inG = new Set(g.tris);
+      const out = new Map(); // start vertex -> list of end vertices
+      for (const t of g.tris) for (let e = 0; e < 3; e++) {
+        const a = T[3 * t + e], b = T[3 * t + (e + 1) % 3]; const k = a < b ? a + "_" + b : b + "_" + a;
+        const other = edgeTris.get(k).filter(w => w !== t);
+        if (other.length && other.every(w => inG.has(w))) continue;
+        let l = out.get(a); if (!l) { l = []; out.set(a, l); } l.push(b);
+      }
+      const loops = [];
+      for (const [s0] of out) {
+        while (out.get(s0) && out.get(s0).length) {
+          const loop = [s0]; let cur = out.get(s0).shift();
+          for (let guard = 0; cur !== s0 && guard < 1e6; guard++) { loop.push(cur); const l = out.get(cur); if (!l || !l.length) break; cur = l.shift(); }
+          if (loop.length >= 3) loops.push(loop);
+        }
+      }
+      if (!loops.length) continue;
+      // classify loops by signed area in the plane
+      const n = g.n; const ref = Math.abs(n[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0];
+      let ux = [ref[1] * n[2] - ref[2] * n[1], ref[2] * n[0] - ref[0] * n[2], ref[0] * n[1] - ref[1] * n[0]]; const ul = Math.hypot(...ux); ux = ux.map(q => q / ul);
+      const uy = [n[1] * ux[2] - n[2] * ux[1], n[2] * ux[0] - n[0] * ux[2], n[0] * ux[1] - n[1] * ux[0]];
+      const area = L => { let s = 0; for (let i = 0; i < L.length; i++) { const p = V[L[i]], q = V[L[(i + 1) % L.length]]; const px = p[0] * ux[0] + p[1] * ux[1] + p[2] * ux[2], py = p[0] * uy[0] + p[1] * uy[1] + p[2] * uy[2], qx = q[0] * ux[0] + q[1] * ux[1] + q[2] * ux[2], qy = q[0] * uy[0] + q[1] * uy[1] + q[2] * uy[2]; s += px * qy - qx * py; } return s / 2; };
+      let oi = 0, best = -Infinity; loops.forEach((L, i) => { const a = area(L); if (a > best) { best = a; oi = i; } });
+      const bounds = [];
+      loops.forEach((L, i) => {
+        const oes = [];
+        for (let k = 0; k < L.length; k++) { const a = L[k], b = L[(k + 1) % L.length]; const ec = edgeCurve(a, b); oes.push(E(`ORIENTED_EDGE('',*,*,#${ec.id},${ec.a === a ? ".T." : ".F."})`)); }
+        const lp = E(`EDGE_LOOP('',(${oes.map(x => "#" + x).join(",")}))`);
+        bounds.push(E(`${i === oi ? "FACE_OUTER_BOUND" : "FACE_BOUND"}('',#${lp},.T.)`));
+      });
+      loopsTotal += loops.length;
+      const o = V[loops[oi][0]];
+      const ax = E(`AXIS2_PLACEMENT_3D('',#${E(`CARTESIAN_POINT('',(${f(o[0])},${f(o[1])},${f(o[2])}))`)},#${dir(n[0], n[1], n[2])},#${dir(ux[0], ux[1], ux[2])})`);
+      const pl = E(`PLANE('',#${ax})`);
+      faceIds.push(E(`ADVANCED_FACE('',(${bounds.map(x => "#" + x).join(",")}),#${pl},.T.)`));
+    }
+    const shell = E(`CLOSED_SHELL('',(${faceIds.map(x => "#" + x).join(",")}))`);
+    const brep = E(`MANIFOLD_SOLID_BREP('${name}',#${shell})`);
+    // product structure + units
+    const appCtx = E(`APPLICATION_CONTEXT('core data for automotive mechanical design processes')`);
+    E(`APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,#${appCtx})`);
+    const prodCtx = E(`PRODUCT_CONTEXT('',#${appCtx},'mechanical')`);
+    const prod = E(`PRODUCT('${name}','${name}','',(#${prodCtx}))`);
+    E(`PRODUCT_RELATED_PRODUCT_CATEGORY('part',$,(#${prod}))`);
+    const pdf = E(`PRODUCT_DEFINITION_FORMATION('','',#${prod})`);
+    const pdc = E(`PRODUCT_DEFINITION_CONTEXT('part definition',#${appCtx},'design')`);
+    const pd = E(`PRODUCT_DEFINITION('design','',#${pdf},#${pdc})`);
+    const pds = E(`PRODUCT_DEFINITION_SHAPE('','',#${pd})`);
+    const mm = E(`( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) )`);
+    const rad = E(`( NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.) )`);
+    const sr = E(`( NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT() )`);
+    const unc = E(`UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-06),#${mm},'distance_accuracy_value','confusion accuracy')`);
+    const ctx = E(`( GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#${unc})) GLOBAL_UNIT_ASSIGNED_CONTEXT((#${mm},#${rad},#${sr})) REPRESENTATION_CONTEXT('Context #1','3D Context with UNIT and UNCERTAINTY') )`);
+    const origin = E(`AXIS2_PLACEMENT_3D('',#${E(`CARTESIAN_POINT('',(0.,0.,0.))`)},#${dir(0, 0, 1)},#${dir(1, 0, 0)})`);
+    const absr = E(`ADVANCED_BREP_SHAPE_REPRESENTATION('${name}',(#${origin},#${brep}),#${ctx})`);
+    E(`SHAPE_DEFINITION_REPRESENTATION(#${pds},#${absr})`);
+    void ctxLines;
+    const now = new Date().toISOString().slice(0, 19);
+    const text = [
+      "ISO-10303-21;", "HEADER;",
+      "FILE_DESCRIPTION(('Gear Designer faceted solid'),'2;1');",
+      `FILE_NAME('${name}.step','${now}',('Gear Designer'),(''),'Gear Designer','Gear Designer','');`,
+      "FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));", "ENDSEC;", "DATA;",
+    ].concat(lines, ["ENDSEC;", "END-ISO-10303-21;", ""]).join("\n");
+    let badEdgeUse = 0; for (const [, r] of ecMap) if (r.uses !== 2) badEdgeUse++;
+    return { text, faces: faceIds.length, edges: ecMap.size, vertices: vxId.size, loops: loopsTotal, badEdgeUse };
+  }
+
+  return {
+    TAU, inv, invInverse, toothSystem, xMin, thicknessAt, meshCalc, contactRatio, spaceHalfAngle,
+    halfSpace, assembleOutline, buildExternal, buildInternal, volumeArea, checkManifold, buildSTL, buildSTEP,
+    triangulate, annulus,
+  };
+})();
+if (typeof module !== "undefined") module.exports = GearCore;
+
+</script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2;
+
+/* ============================================================
+   MATERIAL DATA -- same shape as the Body Mount / Plate tools,
+   notes rewritten for gears.
+   ============================================================ */
+const MATERIALS = {
+  PLA:  { label: "PLA", density: 1.24, wallMul: 1.0, note: "Crisp teeth and easy to print, but brittle and softens near 55 °C. Fine for test fits and slow-turning gears; risky as a motor pinion." },
+  PETG: { label: "PETG", density: 1.27, wallMul: 1.0, note: "The sensible default. Tougher than PLA with good layer bonding, and a little flex that forgives small mesh errors." },
+  ABS:  { label: "ABS", density: 1.04, wallMul: 1.15, note: "Tough, but shrinks and warps. Print enclosed or the teeth on one side come out undersized." },
+  ASA:  { label: "ASA", density: 1.07, wallMul: 1.15, note: "ABS behaviour with UV stability -- for gears on a rig that lives outdoors." },
+  NYLON:{ label: "Nylon", density: 1.14, wallMul: 1.25, note: "The classic printed-gear material: self-lubricating, wear- and fatigue-resistant. Dry the filament first; it's hygroscopic." },
+  PC:   { label: "Polycarbonate", density: 1.20, wallMul: 1.3, note: "Stiffest and most heat-resistant here, but needs a hot enclosure." },
+  TPU:  { label: "TPU (flexible)", density: 1.21, wallMul: 1.4, note: "For vibration-damping hubs and toy drives only. Teeth deflect under load, so don't use it for drivetrain gears." },
+};
+
+/* ============================================================
+   DEFAULTS & PRESETS
+   Sizes are typical community / RC-hobby values: Mod 0.8 and 32P
+   pinions on 1/8" (3.175 mm) motor shafts, 5 mm bores on spurs and
+   brushless crawler motors, 20° pressure angle throughout. They are
+   starting points -- confirm against your own motor shaft, mount
+   slot and existing gears before printing.
+   ============================================================ */
+const DEFAULTS = {
+  unit: "mod", m: 0.8, dp: "32", dpCustom: 32, alpha: "20", form: "full", ha: 1, hf: 1.25, rho: 0.38,
+  mode: "single", aType: "external", z1: 11, x1: 0.36, b1: 8, trunc1: 0, wallA: 4,
+  bType: "external", z2: 56, x2: 0, b2: 7, boreB: "5", webB: true, wallB: 4,
+  beta: 0, hand: "R", herring: false, slices: 0,
+  bore: "3.175", boreCustom: 3.5, boreComp: 0.15, hub: true, hubD: 6.2, hubL: 4, screw: "2.2", web: "solid", webT: 3, holes: 5,
+  j: 0.1, cdAdj: 0, chamB: 0.4, chamT: 0.2, res: 16, material: "PETG", nozzle: "0.4", infill: 40,
+};
+const PRESETS = [
+  { name: "Mod 0.8 Pinion 11T — Shifted", desc: "A small crawler-style pinion for a 1/8\" motor shaft, with +0.36 profile shift so 11 teeth don't undercut. Slim hub with an M2 grub screw.",
+    set: { mode: "single", aType: "external", unit: "mod", m: 0.8, z1: 11, x1: 0.36, trunc1: 0.15, b1: 8, bore: "3.175", hub: true, hubD: 6.2, hubL: 4, screw: "2.2", web: "solid", material: "NYLON", beta: 0, herring: false } },
+  { name: "Mod 0.8 Spur 56T", desc: "A matching spur on a 5 mm bore, thinned to a web with five lightening holes.",
+    set: { mode: "single", aType: "external", unit: "mod", m: 0.8, z1: 56, x1: 0, b1: 7, bore: "5", hub: false, screw: "0", web: "web", webT: 3, holes: 5, material: "PETG", beta: 0, herring: false } },
+  { name: "Mod 0.8 Test Pair 11:56", desc: "The two above as a pair -- checks working centre distance for your motor-mount slot and the contact ratio of the shifted pinion.",
+    set: { mode: "mesh", aType: "external", unit: "mod", m: 0.8, z1: 11, x1: 0.36, trunc1: 0.15, b1: 8, bore: "3.175", hub: true, hubD: 6.2, hubL: 4, screw: "2.2", web: "solid", webT: 3, holes: 5,
+      bType: "external", z2: 56, x2: 0, b2: 7, boreB: "5", webB: true, material: "NYLON", beta: 0, herring: false } },
+  { name: "32P Pinion 14T", desc: "A 1/8\" shaft motor pinion in 32 pitch, with a little profile shift and an M3 set-screw hub.",
+    set: { mode: "single", aType: "external", unit: "dp", dp: "32", z1: 14, x1: 0.2, trunc1: 0.05, b1: 6, bore: "3.175", hub: true, hubD: 8, hubL: 5, screw: "3.2", web: "solid", material: "PETG", beta: 0, herring: false } },
+  { name: "48P Pinion 20T", desc: "Fine pitch. Expect the nozzle warning at 0.4 mm -- this is where a 0.25 mm nozzle or resin starts to earn its keep.",
+    set: { mode: "single", aType: "external", unit: "dp", dp: "48", z1: 20, x1: 0, b1: 5, bore: "3.175", hub: false, screw: "0", web: "solid", material: "PETG", beta: 0, herring: false } },
+  { name: "Mod 1.0 Calibration Pair 12:30", desc: "Big teeth and cheap PLA for dialling in backlash and bore compensation on a new filament before you print the real thing.",
+    set: { mode: "mesh", aType: "external", unit: "mod", m: 1, z1: 12, x1: 0.3, b1: 6, bore: "5", hub: false, screw: "0", web: "solid",
+      bType: "external", z2: 30, x2: 0, b2: 6, boreB: "5", webB: false, material: "PLA", beta: 0, herring: false } },
+  { name: "Helical Mod 1.0 Quiet Pair", desc: "20° right/left helical pair, 15:45. Noticeably quieter than spur -- but it pushes along the shaft, so both gears need to be held against end-float.",
+    set: { mode: "mesh", aType: "external", unit: "mod", m: 1, z1: 15, x1: 0, b1: 8, bore: "5", hub: false, screw: "0", web: "solid",
+      bType: "external", z2: 45, x2: 0, b2: 8, boreB: "5", webB: true, material: "PETG", beta: 20, hand: "R", herring: false } },
+  { name: "Herringbone Mod 1.0", desc: "No net thrust and prints flat without supports -- a good printed-gear showcase.",
+    set: { mode: "single", aType: "external", unit: "mod", m: 1, z1: 24, x1: 0, b1: 10, bore: "5", hub: false, screw: "0", web: "solid", material: "PETG", beta: 25, herring: true } },
+  { name: "Stub Tooth Mod 0.8 Heavy", desc: "Shorter, stockier teeth in Nylon for bash duty.",
+    set: { mode: "single", aType: "external", unit: "mod", m: 0.8, form: "stub", z1: 18, x1: 0, b1: 8, bore: "5", hub: false, screw: "0", web: "solid", material: "NYLON", beta: 0, herring: false } },
+  { name: "Internal Ring 60T", desc: "A 60T ring with a 15T pinion -- a planetary test ring, or a ring to check print accuracy against.",
+    set: { mode: "mesh", aType: "external", unit: "mod", m: 1, z1: 15, x1: 0.13, b1: 8, bore: "5", hub: false, screw: "0", web: "solid",
+      bType: "internal", z2: 60, b2: 8, wallB: 4, material: "PETG", beta: 0, herring: false } },
+];
+const IDS = Object.keys(DEFAULTS);
+const CHECKS = new Set(["webB", "herring", "hub"]);
+const FMT = {
+  m: v => (+v).toFixed(2).replace(/0$/, ""), rho: v => (+v).toFixed(2), x1: v => (+v).toFixed(2), x2: v => (+v).toFixed(2),
+  b1: v => (+v).toFixed(1).replace(/\.0$/, ""), b2: v => (+v).toFixed(1).replace(/\.0$/, ""), trunc1: v => (+v).toFixed(2) + " m",
+  wallA: v => (+v).toFixed(1).replace(/\.0$/, ""), wallB: v => (+v).toFixed(1).replace(/\.0$/, ""),
+  beta: v => v + "°", slices: v => (+v === 0 ? "auto" : v), boreComp: v => (+v).toFixed(2), hubD: v => (+v).toFixed(1), hubL: v => (+v).toFixed(1).replace(/\.0$/, ""),
+  webT: v => (+v).toFixed(1), holes: v => v, j: v => (+v).toFixed(2), cdAdj: v => ((+v) >= 0 ? "+" : "") + (+v).toFixed(2), chamB: v => (+v).toFixed(2), chamT: v => (+v).toFixed(2),
+  res: v => v, infill: v => v + "%",
+};
+
+let basicMode = false, focus = "A", animOn = false, animA = 0;
+let lastGood = null, stickyNote = false;
+
+/* ============================================================
+   READ PARAMS
+   ============================================================ */
+function readP() {
+  const g = id => $(id), num = id => parseFloat(g(id).value);
+  const unit = g("unit").value;
+  const dpVal = g("dp").value === "custom" ? num("dpCustom") : parseFloat(g("dp").value);
+  const m = unit === "dp" ? 25.4 / dpVal : num("m");
+  const form = g("form").value;
+  const ha = form === "full" ? 1 : form === "stub" ? 0.8 : num("ha");
+  const hf = form === "full" ? 1.25 : form === "stub" ? 1.0 : num("hf");
+  const mode = g("mode").value;
+  let aType = g("aType").value; if (mode === "mesh") aType = "external";
+  const bore = g("bore").value === "custom" ? num("boreCustom") : parseFloat(g("bore").value);
+  return {
+    unit, m, dp: dpVal, alpha: parseFloat(g("alpha").value), form, ha, hf, rho: num("rho"),
+    mode, aType, z1: Math.round(num("z1")), x1: aType === "internal" ? 0 : num("x1"), b1: num("b1"), trunc1: num("trunc1"), wallA: num("wallA"),
+    bType: g("bType").value, z2: Math.round(num("z2")), x2: g("bType").value === "internal" ? 0 : num("x2"), b2: num("b2"), boreB: parseFloat(g("boreB").value), webB: g("webB").checked, wallB: num("wallB"),
+    beta: num("beta"), hand: g("hand").value, herring: g("herring").checked && num("beta") > 0, slices: Math.round(num("slices")),
+    bore, boreComp: num("boreComp"), hub: g("hub").checked, hubD: num("hubD"), hubL: num("hubL"), screw: parseFloat(g("screw").value), web: g("web").value, webT: num("webT"), holes: Math.round(num("holes")),
+    j: num("j"), cdAdj: num("cdAdj"), chamB: num("chamB"), chamT: num("chamT"), res: Math.round(num("res")),
+    material: g("material").value, nozzle: parseFloat(g("nozzle").value), infill: num("infill") / 100,
+  };
+}
+
+/* ============================================================
+   MODEL: build A (and B), mesh calc, metrics
+   ============================================================ */
+function resFor(flank) { return { tip: 3, fillet: Math.max(6, Math.round(flank * 0.6)), flank, land: 3, seam: 3 }; }
+function gearSpecs(P, sys, mc) {
+  const k = mc ? mc.k : 0;
+  const common = { j: P.j, chamB: P.chamB, chamT: P.chamT, hand: P.hand, herring: P.herring, slices: P.slices };
+  const A = P.aType === "internal"
+    ? Object.assign({ internal: true, z: P.z1, b: P.b1, wall: P.wallA }, common)
+    : Object.assign({ internal: false, z: P.z1, x: P.x1, b: P.b1, trunc: P.trunc1 * P.m, k, bore: P.bore, boreComp: P.boreComp,
+        hub: { on: P.hub, D: P.hubD, L: P.hubL, screw: P.screw }, web: { on: P.web === "web", t: P.webT, n: P.holes } }, common);
+  let B = null;
+  if (P.mode === "mesh") {
+    const handB = P.bType === "internal" ? P.hand : (P.hand === "R" ? "L" : "R");
+    B = P.bType === "internal"
+      ? Object.assign({}, common, { internal: true, z: P.z2, b: P.b2, wall: P.wallB, hand: handB })
+      : Object.assign({}, common, { internal: false, z: P.z2, x: P.x2, b: P.b2, trunc: 0, k, bore: P.boreB, boreComp: P.boreComp,
+          hub: { on: false }, web: { on: P.webB, t: P.webT, n: P.holes }, hand: handB });
+  }
+  return { A, B };
+}
+function buildOne(sys, spec, flank) {
+  const res = resFor(flank);
+  return spec.internal ? GearCore.buildInternal(sys, spec, res) : GearCore.buildExternal(sys, spec, res);
+}
+function previewFlank(P, spec, sys) {
+  if (!spec) return P.res;
+  let slicesEst = 1;
+  if (P.beta > 0) { const R = spec.z * sys.mt / 2; const tw = Math.abs(Math.tan(sys.beta) / R * (P.herring ? spec.b / 2 : spec.b)) * 180 / Math.PI; slicesEst = P.slices > 0 ? P.slices : Math.min(64, Math.max(4, Math.ceil(tw / 3))); }
+  const layers = slicesEst + 3;
+  const perTooth = (flank) => 2 * (3 + Math.round(flank * 0.6) + flank * 1.3) + 3;
+  let f = P.res;
+  while (f > 6 && spec.z * perTooth(f) * layers * 2 > 36000) f -= 2;
+  return f;
+}
+function measure(sys, spec, g) {
+  const z = spec.z, mn = sys.mn, R = z * sys.mt / 2;
+  if (spec.internal) {
+    const d = r => GearCore.spaceHalfAngle(g.H, r);
+    const tipR = g.rMin + 0.002, rootR = g.rMajor - 0.25 * mn;
+    const tip = (d(tipR) ?? 0) * 2 * tipR, root = (d(rootR) ?? 0) * 2 * rootR, pitchT = (d(R) ?? 0) * 2 * R;
+    return { pitchD: 2 * R, outD: 2 * g.rMin, rootD: 2 * g.rMajor, baseD: 2 * g.rb, tip, root, pitchT, ra: g.rMin, rb: g.rb, ringOD: 2 * g.Rout };
+  }
+  const d = r => GearCore.spaceHalfAngle(g.H, r);
+  const tip = g.pointed ? 0 : Math.max(0, GearCore.thicknessAt(sys, z, spec.x, spec.j, g.ra));
+  const rootR = g.rf + 0.25 * mn, dr = d(rootR);
+  const root = dr == null ? 0 : rootR * (TAU / z - 2 * dr);
+  const dp = d(R); const pitchT = dp == null ? 0 : R * (TAU / z - 2 * dp);
+  return { pitchD: 2 * R, outD: 2 * g.ra, rootD: 2 * g.rf, baseD: 2 * g.rb, tip, root, pitchT, ra: g.ra, rb: g.rb };
+}
+function model(P, full) {
+  const sys = GearCore.toothSystem({ m: P.m, alpha: P.alpha, beta: P.beta, ha: P.ha, hf: P.hf, rho: P.rho });
+  const out = { P, sys, errors: [] };
+  let mc = null;
+  if (P.mode === "mesh") {
+    const internal = P.bType === "internal";
+    if (internal && P.z2 - P.z1 < 2) out.errors.push({ code: "ringSmall" });
+    else mc = GearCore.meshCalc(sys, P.z1, P.x1, P.z2, P.x2, internal);
+  }
+  out.mc = mc;
+  const specs = gearSpecs(P, sys, mc);
+  out.specs = specs;
+  for (const key of ["A", "B"]) {
+    const spec = specs[key]; if (!spec) continue;
+    const flank = full ? P.res : previewFlank(P, spec, sys);
+    try { out[key] = buildOne(sys, spec, flank); out[key + "m"] = measure(sys, spec, out[key]); }
+    catch (e) { out.errors.push({ code: e.code || "degenerate", gear: key }); }
+  }
+  if (mc && out.A && out.B) {
+    const internal = P.bType === "internal";
+    out.eps = GearCore.contactRatio(sys, out.Am.ra, out.Am.rb, out.Bm.ra, out.Bm.rb, mc.aw, mc.alphaW, internal);
+    out.epsB = P.beta > 0 ? Math.min(P.b1, P.b2) * Math.sin(sys.beta) / (Math.PI * sys.mn) : 0;
+  }
+  return out;
+}
+
+/* ============================================================
+   CHECKS -> tiles + single worst note
+   ============================================================ */
+function linesOf(v, P) { return v / P.nozzle; }
+function checks(o) {
+  const P = o.P, mat = MATERIALS[P.material], minL = 1.6 * mat.wallMul, sys = o.sys, notes = [];
+  const add = (pri, cls, text) => notes.push({ pri, cls, text });
+  const names = { A: P.mode === "mesh" ? "Pinion" : "Gear", B: "Gear B" };
+  for (const e of o.errors) {
+    if (e.code === "bore") add(4, "bad", `${names[e.gear]}: bore is too big for this gear -- no wall left under the teeth. Pick a smaller bore or more teeth.`);
+    else if (e.code === "ringSmall") add(3, "bad", "Ring needs more teeth than the pinion -- raise Gear B's tooth count.");
+    else add(1, "bad", `${names[e.gear]}: these settings don't leave a usable tooth. Reduce profile shift or truncation.`);
+  }
+  for (const key of ["A", "B"]) {
+    const g = o[key], m = o[key + "m"], spec = o.specs[key]; if (!g) continue;
+    const nm = names[key];
+    if (g.pointed) add(1, "bad", `${nm}: tooth comes to a point before the tip circle, so reduce profile shift or add tip truncation.`);
+    if (linesOf(m.pitchT, P) < 1) add(5, "bad", `${nm}: teeth are thinner than your ${P.nozzle} mm nozzle can print. Use a bigger module or a finer nozzle.`);
+    if (!spec.internal) {
+      const wall = g.rIn - g.rBore;
+      if (wall < minL * P.nozzle) add(4, "bad", `${nm}: only ${wall.toFixed(2)} mm of plastic between the bore and the tooth roots -- the gear will split. Pick a smaller bore or more teeth.`);
+      if (spec.x < GearCore.xMin(sys, spec.z) - 0.005) add(6, "warn", `${nm}: ${spec.z} teeth at x = ${spec.x.toFixed(2)} will undercut, weakening the root. Try Auto (x ≈ ${(Math.ceil(GearCore.xMin(sys, spec.z) * 100) / 100).toFixed(2)}).`);
+      if (P.material === "PLA" && spec.z <= 20 && spec.bore <= 5 && (P.mode === "single" || key === "A")) add(8, "warn", "PLA softens near 55 °C, and motor pinions get hot. PETG or Nylon is safer.");
+      if (g.hubDropped) add(9, "warn", `${nm}: no room for a hub inside the tooth roots -- hub left off. Use a smaller bore or more teeth.`);
+      else if (g.hubClamped) add(11, "warn", `${nm}: hub Ø limited to ${(2 * g.rHub).toFixed(1)} mm so it stays inside the tooth roots.`);
+      if (spec.hub && spec.hub.on && spec.hub.screw > 0 && !g.screw && !g.hubDropped) add(11, "warn", `${nm}: hub is too short for that set screw -- lengthen it to at least ${(spec.hub.screw + 1.2).toFixed(1)} mm.`);
+      if (spec.web && spec.web.on && !g.webInfo) add(12, "warn", `${nm}: too small for a web -- printed solid. Webs need root Ø ≥ 30 mm and room between hub and rim.`);
+    }
+    const rootL = linesOf(m.root, P);
+    if (!g.pointed && m.tip < 0.25 * sys.mn) add(9, "warn", `${nm}: tip land is only ${m.tip.toFixed(2)} mm -- the tips are nearly pointed and will print ragged. Add a little tip truncation or use less profile shift.`);
+    if (rootL < minL) add(9, "warn", `${nm}: root is only ${rootL.toFixed(1)} nozzle lines thick for ${mat.label} -- raise the module or add positive profile shift.`);
+  }
+  if (o.mc && o.A && o.B) {
+    if (o.eps < 1) add(2, "bad", `Contact ratio ${o.eps.toFixed(2)} means teeth lose contact before the next pair engages, which makes the mesh knock. Add teeth or reduce profile shift / truncation.`);
+    else if (o.eps < 1.2) add(10, "warn", `Contact ratio ${o.eps.toFixed(2)} is low -- the mesh will run rough. More teeth or a smaller pressure angle help.`);
+    if (P.bType === "internal") { const lim = P.alpha < 20 ? 12 : 10; if (P.z2 - P.z1 < lim) add(3, "bad", `Ring and pinion are too close in tooth count (${P.z2 - P.z1} apart), so the tips will interfere. Keep them at least ${lim} apart.`); }
+  }
+  if (P.beta > 30) add(10, "warn", "High helix angle means lots of axial thrust. Make sure both gears are held against end-float.");
+  notes.sort((a, b) => a.pri - b.pri);
+  return notes[0] || { cls: "", text: P.mode === "mesh" ? "Mesh looks healthy. Export each gear, print flat with the chamfered face down, and set the motor at the centre distance shown." : "Set your gear, then export. Mesh pair mode checks how two gears run together. Print flat on the bed, with the chamfered face down." };
+}
+
+/* ============================================================
+   UI STATE / VISIBILITY
+   ============================================================ */
+function show(id, on) { $(id).classList.toggle("hide", !on); }
+function enable(id, on) { const el = $(id); el.disabled = !on; const row = el.closest(".row"); if (row) row.classList.toggle("off", !on); }
+function syncUI(P) {
+  show("rowM", P.unit === "mod"); show("rowDP", P.unit === "dp"); show("dpCustom", $("dp").value === "custom");
+  enable("ha", P.form === "custom"); enable("hf", P.form === "custom");
+  const mesh = P.mode === "mesh";
+  [...$("pairSw").children].forEach(b => b.classList.toggle("active", b.dataset.v === P.mode));
+  show("fsB", mesh); show("rowAType", !mesh); show("focusSw", mesh); show("dlBoth", mesh); show("legendKey", mesh);
+  show("rowCd", mesh);
+  $("legA").textContent = mesh ? "Gear A · pinion" : "Gear";
+  const aInt = P.aType === "internal";
+  show("rowX1", !aInt); show("rowTrunc1", !aInt); show("rowWallA", aInt); show("fsHub", !aInt || mesh);
+  const bInt = P.bType === "internal";
+  show("rowX2", !bInt); show("rowBoreB", !bInt); show("rowWebB", !bInt); show("rowWallB", bInt);
+  $("legHub").textContent = mesh ? "Hub & bore · pinion" : "Hub & bore";
+  show("boreCustom", $("bore").value === "custom");
+  const hel = P.beta > 0;
+  enable("hand", hel && !P.herring); enable("herring", hel); enable("slices", hel);
+  $("handHint").textContent = mesh && hel && !P.herring ? (bInt ? "Ring gets the same hand as the pinion." : `Gear B gets the opposite hand (${P.hand === "R" ? "left" : "right"}).`) : "";
+  show("handHint", !!$("handHint").textContent);
+  enable("hubD", P.hub); enable("hubL", P.hub); enable("screw", P.hub);
+  const webOn = P.web === "web" || (mesh && P.webB);
+  enable("webT", webOn); enable("holes", webOn);
+  $("matNote").textContent = MATERIALS[P.material].note;
+  [...$("focusSw").children].forEach(b => b.classList.toggle("active", b.dataset.v === focus));
+  $("animBtn").textContent = animOn ? "Stop" : "Animate";
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  $("animBtn").disabled = reduced; show("animBtn", mesh); if (!mesh && animOn) { animOn = false; }
+  $("autoX1").disabled = aInt;
+  for (const id in FMT) { const s = $(id + "V"); if (s) s.textContent = FMT[id]($(id).value); }
+}
+
+/* ============================================================
+   UPDATE
+   ============================================================ */
+let current = null;
+function setTile(id, val, unit, cls, label) {
+  const el = $(id); el.className = "m" + (cls ? " " + cls : "");
+  el.querySelector(".v").firstElementChild.textContent = val;
+  if (unit !== undefined) el.querySelector(".u").textContent = unit;
+  if (label) el.querySelector(".k").textContent = label;
+}
+function setNote(cls, text, sticky) { const n = $("note"); n.className = cls || ""; n.textContent = text; stickyNote = !!sticky; }
+function update() {
+  const P = readP();
+  syncUI(P);
+  const o = model(P, false);
+  current = o;
+  const mesh = P.mode === "mesh";
+  if (mesh && focus === "B" && !o.B) focus = "A";
+  if (!mesh) focus = "A";
+  const fk = focus, g = o[fk], m = o[fk + "m"], spec = o.specs[fk];
+  const mat = MATERIALS[P.material], minL = 1.6 * mat.wallMul;
+  if (g) {
+    const f2 = v => v.toFixed(2), f3 = v => v.toFixed(3);
+    setTile("tPitch", f3(m.pitchD), "mm");
+    setTile("tOut", f3(m.outD), "mm", "", spec.internal ? "Tip Ø (minor)" : "Outside Ø");
+    setTile("tRoot", f3(m.rootD), "mm", "", spec.internal ? "Root Ø (major)" : "Root Ø");
+    setTile("tBase", f3(m.baseD), "mm");
+    const tipL = linesOf(m.tip, P), rootL = linesOf(m.root, P);
+    setTile("tTip", g.pointed ? "0" : f2(m.tip), "mm · " + tipL.toFixed(1) + "×", g.pointed ? "bad" : m.tip < 0.25 * o.sys.mn ? "warn" : "");
+    setTile("tRootT", rootL.toFixed(1), "lines", rootL < 1 ? "bad" : rootL < minL ? "warn" : "");
+    const va = GearCore.volumeArea(g.M);
+    const shell = Math.min(va.volume, va.area * 2 * P.nozzle);
+    const mass = mat.density * (shell + (va.volume - shell) * P.infill) / 1000;
+    setTile("tMass", mass.toFixed(mass < 10 ? 2 : 1), "g");
+    setTile("tTri", (g.M.T.length / 3).toLocaleString(), "");
+  } else {
+    ["tPitch", "tOut", "tRoot", "tBase", "tTip", "tRootT", "tMass", "tTri"].forEach(id => setTile(id, "—", undefined, ""));
+  }
+  show("tBase", !mesh); show("tTri", !mesh); show("tRatio", mesh); show("tCd", mesh); show("tEps", mesh);
+  if (mesh) {
+    if (o.mc) {
+      setTile("tRatio", o.mc.ratio.toFixed(2), ": 1");
+      setTile("tCd", (o.mc.aw + P.cdAdj).toFixed(3), "mm");
+    } else { setTile("tRatio", "—"); setTile("tCd", "—"); }
+    if (o.eps != null) setTile("tEps", o.eps.toFixed(2), o.epsB ? " + " + o.epsB.toFixed(2) + " overlap" : "", o.eps < 1 ? "bad" : o.eps < 1.2 ? "warn" : "");
+    else setTile("tEps", "—", "");
+  }
+  const note = checks(o);
+  if (!stickyNote) setNote(note.cls, note.text); else stickyNote = false;
+  // HUD
+  const kind = (spec && spec.internal) || (mesh && P.bType === "internal") ? "ring" : (P.beta > 0 ? (P.herring ? "herringbone" : "helical") : "spur");
+  $("hudtype").textContent = mesh ? `${kind} ${P.z1}:${P.z2}` : `${kind} ${P.z1}T`;
+  $("planlbl").textContent = mesh ? "Plan view · mesh zone" : "Plan view · profile";
+  $("dl").disabled = !g; $("dlStep").disabled = !g;
+  if (g) lastGood = o;
+  pushScene(o);
+  drawPlan();
+}
+
+/* ============================================================
+   VIEWPORT -- same self-contained canvas-2D software renderer as
+   the Body Mount Generator (perspective, backface culling, flat
+   Lambertian shading, painter's sort), extended to draw more than
+   one part with a per-part rotation so a mesh pair can turn.
+   ============================================================ */
+let vcanvas, vctx, scene = [], dirty = true;
+let yaw = -0.9, pitch = 0.95, dist = 90, center = [0, 0, 4], drag = false, lx = 0, ly = 0, fitKey = "";
+function norm3(v) { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; }
+function cross3(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+function sub3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
+function dot3(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+const LIGHT = norm3([0.45, -0.55, 0.8]);
+function placement(o) {
+  const P = o.P, pl = { A: { tx: 0, ty: 0, rot: -Math.PI / 2, dir: 1 } };
+  if (P.mode === "mesh" && o.mc && o.B) {
+    const a = o.mc.aw + P.cdAdj;
+    if (P.bType === "internal") pl.B = { tx: -a, ty: 0, rot: -Math.PI / 2, dir: P.z1 / P.z2 };
+    else pl.B = { tx: a, ty: 0, rot: Math.PI / 2 - Math.PI / P.z2, dir: -P.z1 / P.z2 };
+  }
+  return pl;
+}
+function pushScene(o) {
+  const pl = placement(o), s = [];
+  const single = o.P.mode !== "mesh";
+  if (o.A) s.push({ pos: o.A.M.positions(), col: [233, 161, 59], ...pl.A, rot: single ? 0 : pl.A.rot, key: "A" });
+  if (o.B && pl.B) s.push({ pos: o.B.M.positions(), col: [53, 167, 224], ...pl.B, key: "B" });
+  scene = s;
+  // refit camera when the overall size or mode changes
+  let r = 1, cx = 0, cy = 0, zt = 1;
+  const ext = [];
+  for (const it of s) { const g = o[it.key]; const R = g.Rout || g.ra || 5; ext.push([it.tx - R, it.tx + R, it.ty - R, it.ty + R]); zt = Math.max(zt, g.zTop || o.specs[it.key].b); }
+  if (ext.length) {
+    const x0 = Math.min(...ext.map(e => e[0])), x1 = Math.max(...ext.map(e => e[1])), y0 = Math.min(...ext.map(e => e[2])), y1 = Math.max(...ext.map(e => e[3]));
+    cx = (x0 + x1) / 2; cy = (y0 + y1) / 2; r = Math.max(x1 - x0, y1 - y0) / 2;
+  }
+  const key = o.P.mode + "|" + Math.round(Math.log2(Math.max(1, r)) * 3);
+  if (key !== fitKey) { fitKey = key; dist = Math.max(20, r * 3.3 + zt * 2); center = [cx, cy, zt / 2]; }
+  else center = [cx, cy, zt / 2];
+  dirty = true;
+}
+function initView() {
+  vcanvas = document.createElement("canvas");
+  vcanvas.style.cssText = "display:block;width:100%;height:100%;cursor:grab;touch-action:none";
+  $("view").appendChild(vcanvas);
+  vctx = vcanvas.getContext("2d");
+  vcanvas.addEventListener("pointerdown", e => { drag = true; lx = e.clientX; ly = e.clientY; vcanvas.style.cursor = "grabbing"; vcanvas.setPointerCapture(e.pointerId); });
+  vcanvas.addEventListener("pointerup", () => { drag = false; vcanvas.style.cursor = "grab"; });
+  vcanvas.addEventListener("pointermove", e => {
+    if (!drag) return;
+    yaw += (e.clientX - lx) * 0.008; pitch += (e.clientY - ly) * 0.008;
+    pitch = Math.max(0.05, Math.min(Math.PI - 0.05, pitch)); lx = e.clientX; ly = e.clientY; dirty = true;
+  });
+  vcanvas.addEventListener("wheel", e => { e.preventDefault(); dist = Math.max(8, Math.min(900, dist * (1 + Math.sign(e.deltaY) * 0.1))); dirty = true; }, { passive: false });
+  addEventListener("resize", () => { resize(); dirty = true; });
+  resize(); requestAnimationFrame(renderLoop);
+}
+function resize() {
+  const el = $("view"), w = el.clientWidth, h = el.clientHeight; if (!w || !h) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  vcanvas.width = Math.round(w * dpr); vcanvas.height = Math.round(h * dpr);
+}
+function renderLoop(t) {
+  requestAnimationFrame(renderLoop);
+  if (animOn) { animA += 0.012; dirty = true; drawPlan(); }
+  if (!dirty || !vctx || !vcanvas.width || !vcanvas.height) return;
+  dirty = false;
+  const W = vcanvas.width, H = vcanvas.height;
+  const grad = vctx.createRadialGradient(W / 2, H * 0.12, 10, W / 2, H * 0.12, Math.max(W, H) * 0.85);
+  grad.addColorStop(0, "#16222A"); grad.addColorStop(1, "#0C1216");
+  vctx.fillStyle = grad; vctx.fillRect(0, 0, W, H);
+  const eye = [center[0] + dist * Math.sin(pitch) * Math.cos(yaw), center[1] + dist * Math.sin(pitch) * Math.sin(yaw), center[2] + dist * Math.cos(pitch)];
+  const fwd = norm3(sub3(center, eye));
+  let right = cross3(fwd, [0, 0, 1]);
+  right = Math.hypot(right[0], right[1], right[2]) < 1e-6 ? [1, 0, 0] : norm3(right);
+  const camUp = cross3(right, fwd);
+  const f = Math.min(W, H) * 1.35;
+  function project(p) {
+    const rel = sub3(p, eye);
+    const xc = dot3(rel, right), yc = dot3(rel, camUp), zc = dot3(rel, fwd);
+    if (zc < 0.5) return null;
+    return { x: W / 2 + f * xc / zc, y: H / 2 - f * yc / zc, z: zc };
+  }
+  vctx.strokeStyle = "rgba(53,167,224,0.10)"; vctx.lineWidth = 1;
+  const gS = dist > 200 ? 20 : dist > 60 ? 10 : 5, gN = 12;
+  const gx = Math.round(center[0] / gS) * gS, gy = Math.round(center[1] / gS) * gS;
+  for (let i = -gN; i <= gN; i++) {
+    const a = project([gx + i * gS, gy - gN * gS, 0]), b = project([gx + i * gS, gy + gN * gS, 0]);
+    if (a && b) { vctx.beginPath(); vctx.moveTo(a.x, a.y); vctx.lineTo(b.x, b.y); vctx.stroke(); }
+    const c = project([gx - gN * gS, gy + i * gS, 0]), d = project([gx + gN * gS, gy + i * gS, 0]);
+    if (c && d) { vctx.beginPath(); vctx.moveTo(c.x, c.y); vctx.lineTo(d.x, d.y); vctx.stroke(); }
+  }
+  const tris = [];
+  for (const it of scene) {
+    const ang = it.rot + (animOn ? animA * (it.key === "A" ? 1 : it.dir) : 0);
+    const cr = Math.cos(ang), sr = Math.sin(ang), pos = it.pos;
+    const tf = i => [cr * pos[i] - sr * pos[i + 1] + it.tx, sr * pos[i] + cr * pos[i + 1] + it.ty, pos[i + 2]];
+    for (let i = 0; i < pos.length; i += 9) {
+      const a = tf(i), b = tf(i + 3), c = tf(i + 6);
+      const n = cross3(sub3(b, a), sub3(c, a));
+      const nl = Math.hypot(n[0], n[1], n[2]) || 1e-9;
+      const nn = [n[0] / nl, n[1] / nl, n[2] / nl];
+      const cen = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3];
+      if (dot3(nn, sub3(eye, cen)) <= 0) continue;
+      const pa = project(a), pb = project(b), pc = project(c);
+      if (!pa || !pb || !pc) continue;
+      const diffuse = Math.max(0, dot3(nn, LIGHT));
+      tris.push({ pa, pb, pc, depth: (pa.z + pb.z + pc.z) / 3, shade: 0.32 + 0.68 * diffuse, col: it.col });
+    }
+  }
+  tris.sort((u, v) => v.depth - u.depth);
+  for (const t of tris) {
+    const s = t.shade, c = t.col;
+    vctx.fillStyle = `rgb(${Math.round(c[0] * s + 10 * (1 - s))},${Math.round(c[1] * s + 16 * (1 - s))},${Math.round(c[2] * s + 22 * (1 - s))})`;
+    vctx.strokeStyle = vctx.fillStyle; vctx.lineWidth = 0.6;
+    vctx.beginPath(); vctx.moveTo(t.pa.x, t.pa.y); vctx.lineTo(t.pb.x, t.pb.y); vctx.lineTo(t.pc.x, t.pc.y); vctx.closePath(); vctx.fill(); vctx.stroke();
+  }
+}
+
+/* ============================================================
+   PLAN VIEW -- profile with reference circles; in mesh mode a
+   zoom on the mesh zone with the line of action and contact path
+   ============================================================ */
+function drawPlan() {
+  const cv = $("planc"), x = cv.getContext("2d"), W = cv.width, H = cv.height;
+  x.clearRect(0, 0, W, H);
+  const o = current; if (!o) return;
+  const P = o.P, mesh = P.mode === "mesh" && o.mc && o.A && o.B;
+  const pl = placement(o);
+  let cx0, cy0, k;
+  if (!mesh) {
+    const g = o.A; if (!g) return;
+    const R = g.Rout || g.ra; k = (W / 2 - 10) / R; cx0 = 0; cy0 = 0;
+  } else {
+    const a = o.mc.aw + P.cdAdj, internal = P.bType === "internal";
+    const rw1 = internal ? o.mc.aw * P.z1 / (P.z2 - P.z1) : o.mc.aw * P.z1 / (P.z1 + P.z2);
+    cx0 = rw1; cy0 = 0; k = (W / 2) / (3.4 * o.sys.mt * 1.6); void a;
+  }
+  const X = p => W / 2 + (p[0] - cx0) * k, Y = p => H / 2 - (p[1] - cy0) * k;
+  const circle = (c, r, style, dash) => { x.beginPath(); x.setLineDash(dash || []); x.strokeStyle = style; x.lineWidth = 1.2; x.arc(X(c), Y(c), Math.max(0.5, r * k), 0, TAU); x.stroke(); x.setLineDash([]); };
+  const drawGear = (key, fill, stroke) => {
+    const g = o[key], it = pl[key]; if (!g || !it) return;
+    const ang = (mesh ? it.rot : 0) + (animOn && mesh ? animA * (key === "A" ? 1 : it.dir) : 0);
+    const cr = Math.cos(ang), sr = Math.sin(ang);
+    const tf = p => [cr * p[0] - sr * p[1] + it.tx, sr * p[0] + cr * p[1] + it.ty];
+    x.beginPath();
+    const pts = g.O.pts;
+    if (g.Rout) { const c = [it.tx, it.ty]; x.arc(X(c), Y(c), g.Rout * k, 0, TAU, false); x.closePath(); }
+    pts.forEach((p, i) => { const q = tf(p); if (i) x.lineTo(X(q), Y(q)); else x.moveTo(X(q), Y(q)); }); x.closePath();
+    if (!g.Rout && g.rBore) { const c = [it.tx, it.ty]; x.moveTo(X(c) + g.rBore * k, Y(c)); x.arc(X(c), Y(c), g.rBore * k, 0, TAU, true); }
+    x.fillStyle = fill; x.fill("evenodd"); x.strokeStyle = stroke; x.lineWidth = 1.4; x.stroke();
+    const m = o[key + "m"], c = [it.tx, it.ty];
+    circle(c, m.pitchD / 2, "rgba(53,167,224,.85)", [5, 4]);
+    circle(c, m.baseD / 2, "rgba(122,146,158,.7)", [2, 3]);
+    circle(c, m.rootD / 2, "rgba(34,50,60,1)");
+    circle(c, m.outD / 2, "rgba(34,50,60,1)");
+  };
+  drawGear("A", "rgba(233,161,59,.18)", "#E9A13B");
+  if (mesh) {
+    drawGear("B", "rgba(53,167,224,.16)", "#35A7E0");
+    // line of action + contact path
+    const internal = P.bType === "internal", aw = o.mc.alphaW;
+    const pp = [cx0, 0], u = [Math.sin(aw), Math.cos(aw)];
+    const cA = [0, 0], cB = [pl.B.tx, pl.B.ty];
+    const hit = (c, r) => { const dx = pp[0] - c[0], dy = pp[1] - c[1]; const b = dx * u[0] + dy * u[1], cc = dx * dx + dy * dy - r * r, disc = b * b - cc; if (disc < 0) return null; const s = Math.sqrt(disc); return [-b - s, -b + s]; };
+    const tA = hit(cA, o.Am.ra), tB = hit(cB, o.Bm.ra);
+    const footA = -(pp[0] - cA[0]) * u[0] - (pp[1] - cA[1]) * u[1], footB = -(pp[0] - cB[0]) * u[0] - (pp[1] - cB[1]) * u[1];
+    const L = 3.4 * o.sys.mt * 1.6;
+    const lo = -L, hi = L;
+    x.setLineDash([3, 3]); x.strokeStyle = "rgba(122,146,158,.8)"; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(X([pp[0] + lo * u[0], pp[1] + lo * u[1]]), Y([pp[0] + lo * u[0], pp[1] + lo * u[1]])); x.lineTo(X([pp[0] + hi * u[0], pp[1] + hi * u[1]]), Y([pp[0] + hi * u[0], pp[1] + hi * u[1]])); x.stroke(); x.setLineDash([]);
+    if (tA && tB) {
+      let s0, s1;
+      if (!internal) { s0 = Math.max(Math.min(footA, footB), tB[0], tA[0]); s1 = Math.min(Math.max(footA, footB), tA[1], tB[1]); }
+      else { s0 = Math.max(tA[0], Math.min(footA, footB)); s1 = Math.min(tA[1], Math.max(footA, footB)); }
+      if (s1 > s0) {
+        x.strokeStyle = "#DEE9EF"; x.lineWidth = 2.6; x.beginPath();
+        x.moveTo(X([pp[0] + s0 * u[0], pp[1] + s0 * u[1]]), Y([pp[0] + s0 * u[0], pp[1] + s0 * u[1]]));
+        x.lineTo(X([pp[0] + s1 * u[0], pp[1] + s1 * u[1]]), Y([pp[0] + s1 * u[0], pp[1] + s1 * u[1]])); x.stroke();
+      }
+    }
+    x.fillStyle = "#DEE9EF"; x.beginPath(); x.arc(X(pp), Y(pp), 2.5, 0, TAU); x.fill();
+  }
+}
+
+/* ============================================================
+   EXPORT
+   A page opened directly downloads through a plain anchor. A page
+   FRAMED inside the claude.ai viewer can have that blocked, so there
+   we go through the platform's downloads capability. .stl/.step
+   aren't on its allowlist, so those saves get a .txt suffix and the
+   note explains the one-step rename.
+   ============================================================ */
+let downloadsCap = null;
+const framed = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+if (framed && window.claude && typeof window.claude.use === "function") {
+  window.claude.use("downloads").then(d => { downloadsCap = d; }).catch(() => {});
+}
+async function saveFile(name, data, mime) {
+  if (framed && downloadsCap) {
+    try {
+      await downloadsCap.save({ filename: name + ".txt", data });
+      setNote("", `Saved as ${name}.txt -- this viewer can't hand back a .${name.split(".").pop()} directly, so drop the ".txt" from the filename before opening it.`, true);
+      return true;
+    } catch (e) {
+      if (e && e.code === "declined") { setNote("", "Download cancelled.", true); return false; }
+      if (e && e.code === "rate_limited") { setNote("warn", "A save prompt is already open -- finish that one first.", true); return false; }
+    }
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([data], { type: mime }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  if (framed) setNote("warn", "If nothing downloaded just now: this preview pane can restrict downloads -- open the page in its own tab to export instead.", true);
+  return true;
+}
+function fileName(P, key) {
+  const spec = key === "A" ? { z: P.z1, x: P.x1, b: P.b1, internal: P.aType === "internal", bore: P.bore } : { z: P.z2, x: P.x2, b: P.b2, internal: P.bType === "internal", bore: P.boreB };
+  const pitch = P.unit === "dp" ? `${+P.dp.toFixed(2)}P` : `m${+P.m.toFixed(3)}`;
+  let n = `gear_${pitch}_z${spec.z}` + (spec.internal ? "" : `_x${+spec.x.toFixed(2)}`) + `_b${+spec.b.toFixed(2)}` + (spec.internal ? "" : `_bore${+spec.bore.toFixed(3)}`);
+  if (P.beta > 0) n += P.herring ? `_hb${P.beta}` : `_hel${P.beta}${key === "A" || P.bType === "internal" ? P.hand : (P.hand === "R" ? "L" : "R")}`;
+  if (spec.internal) n += "_int";
+  return n;
+}
+function fullGear(key) {
+  const o = model(readP(), true);
+  const g = o[key]; if (!g) return null;
+  const mf = GearCore.checkManifold(g.M);
+  if (!mf.ok) { setNote("bad", `Export stopped: the solid has ${mf.badEdges} open edges. Change a setting slightly and try again -- and please report the settings (Copy link).`, true); return null; }
+  return { o, g };
+}
+async function exportSTL(key) {
+  const r = fullGear(key); if (!r) return;
+  const P = r.o.P, name = fileName(P, key);
+  await saveFile(name + ".stl", GearCore.buildSTL(r.g.M.positions(), "gear-designer binary STL " + name), "model/stl");
+}
+async function exportSTEP(key) {
+  setNote("", "Building STEP…", true);
+  await new Promise(r => setTimeout(r, 30));
+  const r = fullGear(key); if (!r) return;
+  const P = r.o.P, name = fileName(P, key);
+  const st = GearCore.buildSTEP(r.g.M, name);
+  if (st.badEdgeUse) { setNote("bad", "Export stopped: STEP topology check failed. Please report the settings (Copy link).", true); return; }
+  await saveFile(name + ".step", st.text, "application/step");
+}
+$("dl").addEventListener("click", () => exportSTL(current && current.P.mode === "mesh" ? focus : "A"));
+$("dlStep").addEventListener("click", () => exportSTEP(current && current.P.mode === "mesh" ? focus : "A"));
+$("dlBoth").addEventListener("click", async () => { await exportSTL("A"); await exportSTL("B"); });
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+function initPresets() {
+  const s = $("preset");
+  s.innerHTML = `<option value="-1">Custom</option>` + PRESETS.map((p, i) => `<option value="${i}">${p.name}</option>`).join("");
+  s.addEventListener("change", () => { const i = +s.value; if (i >= 0) applyPreset(PRESETS[i]); });
+}
+function applyValues(vals) {
+  for (const id of IDS) {
+    if (!(id in vals)) continue;
+    const el = $(id);
+    if (CHECKS.has(id)) el.checked = !!vals[id]; else el.value = vals[id];
+  }
+  $("z1N").value = $("z1").value; $("z2N").value = $("z2").value;
+}
+function applyPreset(p) {
+  applyValues(Object.assign({}, DEFAULTS, p.set));
+  $("presetDesc").textContent = p.desc;
+  focus = "A"; fitKey = ""; update(); scheduleSaveHash();
+}
+function markCustom() { if ($("preset").value !== "-1") { $("preset").value = "-1"; $("presetDesc").textContent = "Edited -- pick a preset to start over."; } }
+IDS.forEach(id => { const el = $(id); if (!el) return; ["input", "change"].forEach(ev => el.addEventListener(ev, () => { if (id === "z1") $("z1N").value = el.value; if (id === "z2") $("z2N").value = el.value; markCustom(); update(); scheduleSaveHash(); })); });
+[["z1N", "z1"], ["z2N", "z2"]].forEach(([n, r]) => $(n).addEventListener("change", () => { let v = Math.round(+$(n).value); v = Math.max(+$(r).min, Math.min(+$(r).max, v || +$(r).value)); $(n).value = v; $(r).value = v; markCustom(); update(); scheduleSaveHash(); }));
+$("unit").addEventListener("change", () => {
+  // keep the tooth size when switching units
+  const P = readP();
+  if ($("unit").value === "dp") { const dp = 25.4 / +$("m").value; const opts = [24, 32, 48, 64]; const hit = opts.find(o => Math.abs(o - dp) < 0.5); if (hit) $("dp").value = String(hit); else { $("dp").value = "custom"; $("dpCustom").value = Math.round(dp); } }
+  else { $("m").value = Math.min(3, Math.max(0.3, Math.round(P.m / 0.05) * 0.05)); }
+  update();
+});
+[...$("pairSw").children].forEach(b => b.addEventListener("click", () => { $("mode").value = b.dataset.v; markCustom(); fitKey = ""; update(); scheduleSaveHash(); }));
+[...$("focusSw").children].forEach(b => b.addEventListener("click", () => { focus = b.dataset.v; update(); scheduleSaveHash(); }));
+$("animBtn").addEventListener("click", () => { animOn = !animOn; if (!animOn) { animA = 0; dirty = true; drawPlan(); } syncUI(readP()); });
+function autoX(zId, xId) {
+  const P = readP(); const sys = GearCore.toothSystem({ m: P.m, alpha: P.alpha, beta: P.beta, ha: P.ha, hf: P.hf, rho: P.rho });
+  const xm = GearCore.xMin(sys, Math.round(+$(zId).value));
+  $(xId).value = Math.max(0, Math.ceil(xm * 100) / 100).toFixed(2); markCustom(); update(); scheduleSaveHash();
+}
+$("autoX1").addEventListener("click", () => autoX("z1", "x1"));
+$("autoX2").addEventListener("click", () => autoX("z2", "x2"));
+$("reset").addEventListener("click", () => { applyValues(Object.assign({}, DEFAULTS, PRESETS[0].set)); $("preset").value = "0"; $("presetDesc").textContent = PRESETS[0].desc; focus = "A"; animOn = false; fitKey = ""; update(); scheduleSaveHash(); });
+// converters
+$("cvMM").addEventListener("input", () => { $("cvIN").value = (+$("cvMM").value / 25.4).toFixed(4); });
+$("cvIN").addEventListener("input", () => { $("cvMM").value = (+$("cvIN").value * 25.4).toFixed(3); });
+$("cvMod").addEventListener("input", () => { const v = +$("cvMod").value; if (v > 0) $("cvDP").value = (25.4 / v).toFixed(3); });
+$("cvDP").addEventListener("input", () => { const v = +$("cvDP").value; if (v > 0) $("cvMod").value = (25.4 / v).toFixed(5); });
+
+/* Basic/Advanced mode (display filter only, no storage) */
+function setMode(basic) {
+  basicMode = basic;
+  document.body.classList.toggle("basic-mode", basic);
+  $("modeBasicBtn").classList.toggle("active", basic);
+  $("modeAdvBtn").classList.toggle("active", !basic);
+}
+$("modeBasicBtn").addEventListener("click", () => { setMode(true); scheduleSaveHash(); });
+$("modeAdvBtn").addEventListener("click", () => { setMode(false); scheduleSaveHash(); });
+
+/* save/share a build as a URL hash */
+function serializeConfig() {
+  const o = {};
+  for (const id of IDS) { const el = $(id); o[id] = CHECKS.has(id) ? el.checked : el.value; }
+  o._ui = basicMode ? "basic" : "advanced"; o._focus = focus; o._preset = $("preset").value;
+  return o;
+}
+function saveHashNow() { try { history.replaceState(null, "", "#cfg=" + btoa(JSON.stringify(serializeConfig()))); } catch (e) {} }
+let hashTimer = null;
+function scheduleSaveHash() { clearTimeout(hashTimer); hashTimer = setTimeout(saveHashNow, 400); }
+function tryRestoreFromHash() {
+  const m = location.hash.match(/#cfg=([^&]+)/); if (!m) return false;
+  try {
+    const o = JSON.parse(atob(m[1]));
+    applyValues(o); setMode(o._ui === "basic"); focus = o._focus === "B" ? "B" : "A";
+    if (o._preset != null) { $("preset").value = o._preset; const i = +o._preset; $("presetDesc").textContent = i >= 0 && PRESETS[i] ? PRESETS[i].desc : "Restored from link."; }
+    return true;
+  } catch (e) { return false; }
+}
+$("saveLink").addEventListener("click", async () => {
+  clearTimeout(hashTimer); saveHashNow();
+  const btn = $("saveLink"), old = btn.textContent;
+  try { await navigator.clipboard.writeText(location.href); btn.textContent = "Copied!"; }
+  catch (e) { btn.textContent = "Link updated in address bar"; }
+  setTimeout(() => { btn.textContent = old; }, 1800);
+});
+
+/* tooltips */
+(function () {
+  const pop = $("qtipPop");
+  function place(el) {
+    pop.style.left = "0px"; pop.style.top = "0px"; pop.classList.add("show");
+    const r = el.getBoundingClientRect(), pr = pop.getBoundingClientRect();
+    let x = r.left + r.width / 2 - pr.width / 2; x = Math.max(8, Math.min(x, window.innerWidth - pr.width - 8));
+    let y = r.top - pr.height - 8; if (y < 8) y = r.bottom + 8;
+    pop.style.left = x + "px"; pop.style.top = y + "px";
+  }
+  function showTip(el) { pop.textContent = el.getAttribute("data-tip"); place(el); }
+  function hide() { pop.classList.remove("show"); }
+  document.querySelectorAll(".qtip").forEach(el => {
+    el.addEventListener("mouseenter", () => showTip(el));
+    el.addEventListener("mouseleave", hide);
+    el.addEventListener("focus", () => showTip(el));
+    el.addEventListener("blur", hide);
+    el.addEventListener("click", e => e.preventDefault());
+  });
+})();
+
+initPresets();
+if (!tryRestoreFromHash()) { applyValues(Object.assign({}, DEFAULTS, PRESETS[0].set)); $("preset").value = "0"; $("presetDesc").textContent = PRESETS[0].desc; setMode(false); }
+try { initView(); } catch (e) { console.error("3D viewport failed to start:", e); }
+update();
+</script>
+</body>
+</html>
