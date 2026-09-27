@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Gear Designer</title>
+<title>HamSammy's Gear Designer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@ body{
   font-family:var(--disp); font-size:14px;
   display:grid; grid-template-columns:348px 1fr; height:100%; overflow:hidden;
 }
-h1{font-size:15px;font-weight:700;letter-spacing:-.01em;margin:0}
+h1{font-size:15px;font-weight:700;letter-spacing:-.01em;margin:0;line-height:1.2}
 .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
 
 #panel{background:var(--panel);border-right:1px solid var(--rule);display:flex;flex-direction:column;min-height:0}
@@ -95,14 +95,15 @@ button:hover{border-color:var(--signal);color:var(--signal)}
 #dl{background:var(--amber);border-color:var(--amber);color:#1A1206}
 #dl:hover{background:#F2B355;border-color:#F2B355;color:#1A1206}
 .mini{padding:5px 9px;font-size:10px}
-#subfoot{display:flex;justify-content:flex-end;gap:14px;margin-top:6px;align-items:center}
+#subfoot{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:6px 14px;margin-top:6px;align-items:center}
 
 .seg{display:flex;gap:0;border:1px solid var(--rule);border-radius:5px;overflow:hidden;width:fit-content}
 .seg button{border:0;border-radius:0;padding:6px 13px;font-size:10.5px;background:transparent;color:var(--muted)}
 .seg button.active{background:var(--signal);color:#06222E}
 .seg button:hover{color:var(--signal)}
 .seg button.active:hover{color:#06222E}
-#modeSw{margin-top:10px}
+#modeSw{margin-top:10px;display:inline-flex;vertical-align:middle}
+#secAll{margin:10px 0 0 12px;vertical-align:middle}
 .seg.small button{padding:4px 9px;font-size:9.5px}
 body.basic-mode .adv{display:none!important}
 .linkbtn{font-family:var(--mono);font-size:10.5px;color:var(--signal);cursor:pointer;background:none;border:0;padding:0;text-decoration:underline;letter-spacing:0;text-transform:none;font-weight:400}
@@ -113,6 +114,19 @@ body.basic-mode .adv{display:none!important}
   flex:0 0 auto;vertical-align:middle;letter-spacing:0}
 .qtip:hover,.qtip:focus-visible{border-color:var(--signal);color:var(--signal);outline:none}
 legend .qtip{margin-left:8px;transform:translateY(-1px)}
+.secTog{all:unset;display:inline-flex;align-items:center;gap:8px;cursor:pointer;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit}
+.secTog:hover{color:var(--text)}
+.secTog:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:2px}
+.chev{width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .15s;flex:0 0 auto}
+.sec.collapsed .chev{transform:rotate(-45deg)}
+.sec.collapsed .secBody{display:none}
+.sec.collapsed legend{margin-bottom:0}
+.sec.collapsed{padding-bottom:0}
+legend{max-width:100%}
+.secTog{max-width:100%;min-width:0}
+.legTxt{white-space:nowrap;flex:0 0 auto}
+.secSum{color:var(--muted);text-transform:none;letter-spacing:0;font-size:10.5px;margin-left:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.sec:not(.collapsed) .secSum{display:none}
 #qtipPop{position:fixed;max-width:250px;background:#0F1B22;border:1px solid var(--rule);border-radius:6px;
   padding:9px 11px;font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--muted);line-height:1.5;
   text-transform:none;letter-spacing:normal;z-index:200;opacity:0;pointer-events:none;
@@ -134,32 +148,38 @@ legend .qtip{margin-left:8px;transform:translateY(-1px)}
 
 <div id="panel">
   <div id="phead">
-    <h1>Gear Designer</h1>
+    <h1>HamSammy's Gear Designer</h1>
     <div class="sub">RC gears · involute · STL + STEP</div>
     <div id="modeSw" class="seg">
       <button type="button" id="modeBasicBtn">Basic</button>
       <button type="button" id="modeAdvBtn" class="active">Advanced</button>
     </div>
+    <button type="button" class="linkbtn" id="secAll">Expand all</button>
   </div>
   <div id="pbody">
 
-    <fieldset>
-      <legend>Preset<button type="button" class="qtip" data-tip="A full parameter bundle -- tooth system, gear sizes, hub and material. Loads over whatever you have set now. Sizes are typical RC-hobby values; confirm against your own motor shaft and mount before printing.">?</button></legend>
+    <fieldset class="sec collapsed" id="secPreset">
+      <legend><button type="button" class="secTog" aria-expanded="false" aria-controls="secPresetBody"><span class="chev" aria-hidden="true"></span><span class="legTxt">Preset</span><span class="secSum" id="secPresetSum"></span></button><button type="button" class="qtip" data-tip="A full parameter bundle -- tooth system, gear sizes, hub and material. Loads over whatever you have set now. Sizes are typical RC-hobby values; confirm against your own motor shaft and mount before printing.">?</button></legend>
+      <div class="secBody" id="secPresetBody">
       <select id="preset"></select>
       <div class="hint" id="presetDesc" style="margin:8px 0 4px"></div>
+      </div>
     </fieldset>
 
-    <fieldset>
-      <legend>Setup</legend>
+    <fieldset class="sec collapsed" id="secSetup">
+      <legend><button type="button" class="secTog" aria-expanded="false" aria-controls="secSetupBody"><span class="chev" aria-hidden="true"></span><span class="legTxt">Setup</span><span class="secSum" id="secSetupSum"></span></button></legend>
+      <div class="secBody" id="secSetupBody">
       <div class="row"><label>Mode<button type="button" class="qtip" data-tip="Single gear designs one part. Mesh pair designs a pinion and the gear it drives together, and checks the centre distance and how smoothly the teeth hand over contact.">?</button></label>
         <div class="ctl"><div class="seg small" id="pairSw"><button type="button" data-v="single" class="active">Single gear</button><button type="button" data-v="mesh">Mesh pair</button></div></div></div>
       <input type="hidden" id="mode" value="single">
       <div class="row" id="rowAType"><label>Gear type</label>
         <div class="ctl"><select id="aType" style="width:132px"><option value="external">External</option><option value="internal">Internal (ring)</option></select></div></div>
+      </div>
     </fieldset>
 
-    <fieldset>
-      <legend>Tooth system</legend>
+    <fieldset class="sec collapsed" id="secTooth">
+      <legend><button type="button" class="secTog" aria-expanded="false" aria-controls="secToothBody"><span class="chev" aria-hidden="true"></span><span class="legTxt">Tooth system</span><span class="secSum" id="secToothSum"></span></button></legend>
+      <div class="secBody" id="secToothBody">
       <div class="row"><label>Pitch unit<button type="button" class="qtip" data-tip="Metric gears are sized by module (pitch diameter ÷ teeth, in mm). Imperial RC gears use diametral pitch (teeth per inch of pitch diameter). Switching converts the value: module = 25.4 ÷ DP.">?</button></label>
         <div class="ctl"><select id="unit" style="width:132px"><option value="mod">Module</option><option value="dp">Diametral pitch</option></select></div></div>
       <div class="row" id="rowM"><label>Module<button type="button" class="qtip" data-tip="Tooth size. Mod 0.8 and Mod 1.0 are common on 1/10 crawlers. At a 0.4 mm nozzle, anything under ~0.7 gets teeth only a couple of extrusion lines thick.">?</button></label>
@@ -176,10 +196,12 @@ legend .qtip{margin-left:8px;transform:translateY(-1px)}
         <div class="ctl"><input type="number" id="hf" min="0.7" max="1.5" step="0.05" value="1.25"></div></div>
       <div class="row adv"><label>Root fillet ρf*<button type="button" class="qtip" data-tip="Radius of the round at the bottom of each tooth space, as a multiple of module. Bigger spreads the bending stress where teeth crack. 0.38 is the ISO standard hob.">?</button></label>
         <div class="ctl"><input type="range" id="rho" min="0" max="0.45" step="0.01" value="0.38"><span class="val" id="rhoV">0.38</span></div></div>
+      </div>
     </fieldset>
 
-    <fieldset>
-      <legend id="legA">Gear</legend>
+    <fieldset class="sec collapsed" id="secGearA">
+      <legend><button type="button" class="secTog" aria-expanded="false" aria-controls="secGearABody"><span class="chev" aria-hidden="true"></span><span class="legTxt" id="legA">Gear</span><span class="secSum" id="secGearASum"></span></button></legend>
+      <div class="secBody" id="secGearABody">
       <div class="row"><label>Teeth</label>
         <div class="ctl"><input type="range" id="z1" min="6" max="200" step="1" value="11"><input type="number" class="nb" id="z1N" min="6" max="200" step="1" value="11"></div></div>
       <div class="row" id="rowX1"><label>Profile shift<button type="button" class="qtip" data-tip="Moves the cutter outward (+) or inward (−). Positive shift thickens the tooth root and removes undercut on small pinions; it also grows the outside diameter by 2·x·m. Auto picks the smallest shift that avoids undercut.">?</button></label>
@@ -190,10 +212,12 @@ legend .qtip{margin-left:8px;transform:translateY(-1px)}
         <div class="ctl"><input type="range" id="trunc1" min="0" max="0.3" step="0.01" value="0"><span class="val" id="trunc1V">0</span></div></div>
       <div class="row hide" id="rowWallA"><label>Ring wall<button type="button" class="qtip" data-tip="Plastic outside the ring's tooth roots, in mm. The ring's outer diameter is the root diameter plus twice this.">?</button></label>
         <div class="ctl"><input type="range" id="wallA" min="1.5" max="20" step="0.5" value="4"><span class="val" id="wallAV">4</span></div></div>
+      </div>
     </fieldset>
 
-    <fieldset id="fsB" class="hide">
-      <legend>Gear B · driven</legend>
+    <fieldset class="sec collapsed hide" id="fsB">
+      <legend><button type="button" class="secTog" aria-expanded="false" aria-controls="fsBBody"><span class="chev" aria-hidden="true"></span><span class="legTxt">Gear B · driven</span><span class="secSum" id="fsBSum"></span></button></legend>
+      <div class="secBody" id="fsBBody">
       <div class="row"><label>Gear type<button type="button" class="qtip" data-tip="External: a normal spur the pinion drives from outside. Internal: a ring gear the pinion runs inside, as in a planetary stage. Internal rings are fixed at zero profile shift in this version.">?</button></label>
         <div class="ctl"><select id="bType" style="width:132px"><option value="external">External</option><option value="internal">Internal (ring)</option></select></div></div>
       <div class="row"><label>Teeth</label>
@@ -203,14 +227,22 @@ legend .qtip{margin-left:8px;transform:translateY(-1px)}
       <div class="row"><label>Face width</label>
         <div class="ctl"><input type="range" id="b2" min="2" max="30" step="0.5" value="7"><span class="val" id="b2V">7</span></div></div>
       <div class="row" id="rowBoreB"><label>Bore Ø</label>
-        <div class="ctl"><select id="boreB" style="width:110px"><option value="2">2 mm</option><option value="2.3">2.3 mm</option><option value="3">3 mm</option><option value="3.175">3.175 (1/8")</option><option value="4">4 mm</option><option value="5" selected>5 mm</option><option value="6">6 mm</option><option value="8">8 mm</option></select></div></div>
+        <div class="ctl"><select id="boreB" style="width:110px"><option value="2">2 mm</option><option value="2.3">2.3 mm</option><option value="3">3 mm</option><option value="3.175">3.175 (1/8")</option><option value="4">4 mm</option><option value="5" selected>5 mm</option><option value="5.4">5.4 mm</option><option value="6">6 mm</option><option value="8">8 mm</option></select></div></div>
+      <div class="row" id="rowShapeB"><label>Bore shape<button type="button" class="qtip" data-tip="Round relies on the set screw alone. D and Double-D (DD) have a flat that matches the flat on your shaft, so the gear can't spin on it -- measure across the flat with calipers. Key cuts a slot for a square key (DIN 6885 sizes from 6 mm shafts up).">?</button></label>
+        <div class="ctl"><div class="seg small" id="boreShapeBSw"><button type="button" data-v="round" class="active">Round</button><button type="button" data-v="d">D</button><button type="button" data-v="dd">DD</button><button type="button" data-v="key">Key</button></div><input type="hidden" id="boreShapeB" value="round"></div></div>
+      <div class="row hide" id="rowFlatB"><label>Across flat<button type="button" class="qtip" data-tip="Calipers across the flat to the far side of the shaft (D), or flat to flat (Double-D). N20 gearmotors are usually 2.5 on a 3 mm shaft; NEMA 17 steppers 4.5 on 5 mm. Bore compensation is added on top.">?</button></label>
+        <div class="ctl"><span class="val" id="flatBHint" style="width:auto;min-width:0"></span><input type="number" id="flatB" class="nb" min="0.5" max="20" step="0.05" value="4.5"></div></div>
+      <div class="row hide adv" id="rowKeyB"><label>Key b × t₂<button type="button" class="qtip" data-tip="Auto picks the DIN 6885 key for your bore (from 6 mm shafts up). Custom sets key width b and hub keyway depth t2, measured from the bore surface. The keyway sits 90° from the set screw.">?</button></label>
+        <div class="ctl"><label class="sw"><input type="checkbox" id="keyAutoB" checked> Auto</label><input type="number" id="keyWB" class="nb" min="0.8" max="8" step="0.1" value="2" title="Key width b (mm)"><input type="number" id="keyT2B" class="nb" min="0.3" max="4" step="0.1" value="1" title="Hub keyway depth t2 (mm)"></div></div>
       <div class="row" id="rowWebB"><label class="sw"><input type="checkbox" id="webB" checked> Web + lightening holes</label><button type="button" class="qtip" data-tip="Thins the middle of a big spur to a web with round cut-outs -- less plastic and print time, same tooth rim. Uses the web settings under Hub & bore. Only applied when the gear is big enough (root Ø ≥ 30 mm).">?</button></div>
       <div class="row hide" id="rowWallB"><label>Ring wall</label>
         <div class="ctl"><input type="range" id="wallB" min="1.5" max="20" step="0.5" value="4"><span class="val" id="wallBV">4</span></div></div>
+      </div>
     </fieldset>
 
-    <fieldset>
-      <legend>Helix</legend>
+    <fieldset class="sec collapsed" id="secHelix">
+      <legend><button type="button" class="secTog" aria-expanded="false" aria-controls="secHelixBody"><span class="chev" aria-hidden="true"></span><span class="legTxt">Helix</span><span class="secSum" id="secHelixSum"></span></button></legend>
+      <div class="secBody" id="secHelixBody">
       <div class="row"><label>Helix angle<button type="button" class="qtip" data-tip="0° is a straight-cut spur. Angled teeth engage gradually, so the mesh runs quieter and smoother -- but they push the gears apart along the shaft.">?</button></label>
         <div class="ctl"><input type="range" id="beta" min="0" max="45" step="1" value="0"><span class="val" id="betaV">0°</span></div></div>
       <div class="row" id="rowHand"><label>Hand</label>
@@ -219,12 +251,29 @@ legend .qtip{margin-left:8px;transform:translateY(-1px)}
       <div class="row" id="rowHerring"><label class="sw"><input type="checkbox" id="herring"> Herringbone</label><button type="button" class="qtip" data-tip="Twists one way to mid-face and back. The two halves cancel each other's axial thrust, and it still prints flat without supports.">?</button></div>
       <div class="row adv" id="rowSlices"><label>Slices<button type="button" class="qtip" data-tip="How many steps the twist is built from. Auto uses one slice per ~3° of twist. More is smoother but makes bigger files.">?</button></label>
         <div class="ctl"><input type="range" id="slices" min="0" max="64" step="1" value="0"><span class="val" id="slicesV">auto</span></div></div>
+      </div>
     </fieldset>
 
-    <fieldset id="fsHub">
-      <legend id="legHub">Hub &amp; bore</legend>
+    <fieldset class="sec collapsed" id="fsHub">
+      <legend><button type="button" class="secTog" aria-expanded="false" aria-controls="fsHubBody"><span class="chev" aria-hidden="true"></span><span class="legTxt" id="legHub">Hub &amp; bore</span><span class="secSum" id="fsHubSum"></span></button></legend>
+      <div class="secBody" id="fsHubBody">
       <div class="row"><label>Bore Ø<button type="button" class="qtip" data-tip="Shaft hole. 3.175 mm is a 1/8&quot; motor shaft (most 540/550 motors); 5 mm suits many brushless crawler motors.">?</button></label>
-        <div class="ctl"><select id="bore" style="width:110px"><option value="2">2 mm</option><option value="2.3">2.3 mm</option><option value="3">3 mm</option><option value="3.175">3.175 (1/8")</option><option value="4">4 mm</option><option value="5">5 mm</option><option value="custom">Custom</option></select><input type="number" id="boreCustom" class="nb hide" min="1" max="20" step="0.05" value="3.5"></div></div>
+        <div class="ctl"><select id="bore" style="width:110px"><option value="2">2 mm</option><option value="2.3">2.3 mm</option><option value="3">3 mm</option><option value="3.175">3.175 (1/8")</option><option value="4">4 mm</option><option value="5">5 mm</option><option value="5.4">5.4 mm</option><option value="6">6 mm</option><option value="8">8 mm</option><option value="custom">Custom</option></select><input type="number" id="boreCustom" class="nb hide" min="1" max="20" step="0.05" value="3.5"></div></div>
+      <div class="row" id="rowShape"><label>Bore shape<button type="button" class="qtip" data-tip="Round relies on the set screw alone. D and Double-D (DD) have a flat that matches the flat on your shaft, so the gear can't spin on it -- measure across the flat with calipers. Key cuts a slot for a square key (DIN 6885 sizes from 6 mm shafts up).">?</button></label>
+        <div class="ctl"><div class="seg small" id="boreShapeSw"><button type="button" data-v="round" class="active">Round</button><button type="button" data-v="d">D</button><button type="button" data-v="dd">DD</button><button type="button" data-v="key">Key</button></div><input type="hidden" id="boreShape" value="round"></div></div>
+      <div class="row hide" id="rowFlat"><label>Across flat<button type="button" class="qtip" data-tip="Calipers across the flat to the far side of the shaft (D), or flat to flat (Double-D). N20 gearmotors are usually 2.5 on a 3 mm shaft; NEMA 17 steppers 4.5 on 5 mm. Bore compensation is added on top.">?</button></label>
+        <div class="ctl"><span class="val" id="flatHint" style="width:auto;min-width:0"></span><input type="number" id="flat" class="nb" min="0.5" max="20" step="0.05" value="4.5"></div></div>
+      <div class="row hide adv" id="rowKey"><label>Key b × t₂<button type="button" class="qtip" data-tip="Auto picks the DIN 6885 key for your bore (from 6 mm shafts up). Custom sets key width b and hub keyway depth t2, measured from the bore surface. The keyway sits 90° from the set screw.">?</button></label>
+        <div class="ctl"><label class="sw"><input type="checkbox" id="keyAuto" checked> Auto</label><input type="number" id="keyW" class="nb" min="0.8" max="8" step="0.1" value="2" title="Key width b (mm)"><input type="number" id="keyT2" class="nb" min="0.3" max="4" step="0.1" value="1" title="Hub keyway depth t2 (mm)"></div></div>
+      <div class="row" id="rowShaft"><label>Shaft preset<button type="button" class="qtip" data-tip="Fills bore, shape and flat for common motors. Values are typical -- measure your own shaft.">?</button></label>
+        <div class="ctl"><select id="shaftPreset" style="width:150px">
+          <option value="">--</option>
+          <option value="3|d|2.5">N20 gearmotor · 3 D</option>
+          <option value="5|d|4.5">NEMA 17 · 5 D</option>
+          <option value="5.4|dd|3.7">TT motor · 5.4 DD</option>
+          <option value="3.175|d|2.85">1/8" shaft w/ flat</option>
+          <option value="8|key|">8 mm keyed (2×2)</option>
+        </select></div></div>
       <div class="row adv"><label>Bore compensation<button type="button" class="qtip" data-tip="Added to the modelled hole, because printed holes come out undersized. 0.1-0.2 mm is typical at 0.4 mm nozzle; tune it with the calibration preset.">?</button></label>
         <div class="ctl"><input type="range" id="boreComp" min="0" max="0.4" step="0.01" value="0.15"><span class="val" id="boreCompV">0.15</span></div></div>
       <div class="row" id="rowHub"><label class="sw"><input type="checkbox" id="hub"> Hub</label><button type="button" class="qtip" data-tip="A collar on top of the gear that gives a set screw something to bite into. It has to fit inside the tooth roots, so small pinions get a slim hub.">?</button></div>
@@ -233,17 +282,19 @@ legend .qtip{margin-left:8px;transform:translateY(-1px)}
       <div class="row" id="rowHubL"><label>Hub length</label>
         <div class="ctl"><input type="range" id="hubL" min="1" max="15" step="0.5" value="4"><span class="val" id="hubLV">4</span></div></div>
       <div class="row" id="rowScrew"><label>Set screw<button type="button" class="qtip" data-tip="A radial clearance hole through the hub wall, centred on the hub height. Needs a hub at least the screw's diameter + 1.2 mm long.">?</button></label>
-        <div class="ctl"><select id="screw" style="width:90px"><option value="0">None</option><option value="2.2">M2</option><option value="2.7">M2.5</option><option value="3.2">M3</option></select></div></div>
+        <div class="ctl"><select id="screw" style="width:90px"><option value="0">None</option><option value="1.8">M1.6</option><option value="2.2">M2</option><option value="2.7">M2.5</option><option value="3.2">M3</option></select></div></div>
       <div class="row adv" id="rowWeb"><label>Body<button type="button" class="qtip" data-tip="Web + holes thins the middle of a large gear to a flat web sitting on the bed, with round lightening holes. Only offered once the root diameter reaches 30 mm.">?</button></label>
         <div class="ctl"><select id="web" style="width:120px"><option value="solid">Solid</option><option value="web">Web + holes</option></select></div></div>
       <div class="row adv" id="rowWebT"><label>Web thickness</label>
         <div class="ctl"><input type="range" id="webT" min="1.2" max="20" step="0.1" value="3"><span class="val" id="webTV">3</span></div></div>
       <div class="row adv" id="rowHoles"><label>Holes</label>
         <div class="ctl"><input type="range" id="holes" min="3" max="8" step="1" value="5"><span class="val" id="holesV">5</span></div></div>
+      </div>
     </fieldset>
 
-    <fieldset>
-      <legend>Fit &amp; print</legend>
+    <fieldset class="sec collapsed" id="secFit">
+      <legend><button type="button" class="secTog" aria-expanded="false" aria-controls="secFitBody"><span class="chev" aria-hidden="true"></span><span class="legTxt">Fit &amp; print</span><span class="secSum" id="secFitSum"></span></button></legend>
+      <div class="secBody" id="secFitBody">
       <div class="row"><label>Backlash per flank<button type="button" class="qtip" data-tip="Thins every tooth flank by this much (mm, along the pitch circle) so printed gears don't bind. FDM gears typically want 0.08-0.15 mm per flank.">?</button></label>
         <div class="ctl"><input type="range" id="j" min="0" max="0.3" step="0.01" value="0.1"><span class="val" id="jV">0.10</span></div></div>
       <div class="row adv" id="rowCd"><label>Centre-distance adjust<button type="button" class="qtip" data-tip="Moves Gear B away from (+) or toward (−) the pinion in the preview and readout -- a quick way to see how much play a slotted motor mount gives you.">?</button></label>
@@ -254,10 +305,12 @@ legend .qtip{margin-left:8px;transform:translateY(-1px)}
         <div class="ctl"><input type="range" id="chamT" min="0" max="0.8" step="0.05" value="0.2"><span class="val" id="chamTV">0.20</span></div></div>
       <div class="row adv"><label>Profile resolution<button type="button" class="qtip" data-tip="Points per tooth flank on export. 16 is smooth well beyond what a 0.4 mm nozzle can reproduce; raise it for resin prints or CAD work. The preview may use fewer on big gears to stay responsive.">?</button></label>
         <div class="ctl"><input type="range" id="res" min="8" max="40" step="1" value="16"><span class="val" id="resV">16</span></div></div>
+      </div>
     </fieldset>
 
-    <fieldset>
-      <legend>Material &amp; printing</legend>
+    <fieldset class="sec collapsed" id="secMat">
+      <legend><button type="button" class="secTog" aria-expanded="false" aria-controls="secMatBody"><span class="chev" aria-hidden="true"></span><span class="legTxt">Material &amp; printing</span><span class="secSum" id="secMatSum"></span></button></legend>
+      <div class="secBody" id="secMatBody">
       <div class="row"><label>Filament</label>
         <div class="ctl"><select id="material" style="width:120px">
           <option value="PLA">PLA</option><option value="PETG" selected>PETG</option><option value="ABS">ABS</option>
@@ -268,12 +321,15 @@ legend .qtip{margin-left:8px;transform:translateY(-1px)}
         <div class="ctl"><select id="nozzle" style="width:108px"><option value="0.4" selected>0.4 mm</option><option value="0.6">0.6 mm</option><option value="0.8">0.8 mm</option><option value="1.0">1.0 mm</option></select></div></div>
       <div class="row adv"><label>Infill<button type="button" class="qtip" data-tip="Feeds the mass estimate only -- doesn't change the exported geometry (the STL is the solid outer shape either way; infill is chosen in your slicer). Gears want 3+ perimeters so the teeth print solid; infill then only fills the hub.">?</button></label>
         <div class="ctl"><input type="range" id="infill" min="10" max="100" step="5" value="40"><span class="val" id="infillV">40%</span></div></div>
+      </div>
     </fieldset>
 
-    <fieldset class="adv">
-      <legend>Unit converter</legend>
+    <fieldset class="sec collapsed adv" id="secConv">
+      <legend><button type="button" class="secTog" aria-expanded="false" aria-controls="secConvBody"><span class="chev" aria-hidden="true"></span><span class="legTxt">Unit converter</span><span class="secSum" id="secConvSum"></span></button></legend>
+      <div class="secBody" id="secConvBody">
       <div class="conv"><input type="number" id="cvMM" value="25.4" step="0.1"><span>mm</span><span style="color:var(--signal)">=</span><input type="number" id="cvIN" value="1" step="0.001"><span>in</span></div>
       <div class="conv"><input type="number" id="cvMod" value="0.79375" step="0.01"><span>mod</span><span style="color:var(--signal)">=</span><input type="number" id="cvDP" value="32" step="1"><span>DP</span></div>
+      </div>
     </fieldset>
 
   </div>
@@ -309,7 +365,7 @@ legend .qtip{margin-left:8px;transform:translateY(-1px)}
         <button id="dlStep" type="button">Export STEP</button>
         <button id="dl" type="button">Export STL</button>
       </div>
-      <div id="subfoot"><button type="button" class="linkbtn hide" id="dlBoth">Export both gears (STL)</button><button id="saveLink" type="button" class="linkbtn">Copy link to this build</button></div>
+      <div id="subfoot"><button type="button" class="linkbtn hide" id="dlBoth">Export both gears (STL)</button><button type="button" class="linkbtn hide" id="dlBothStep">Export both gears (STEP)</button><button id="saveLink" type="button" class="linkbtn">Copy link to this build</button></div>
     </div>
   </div>
 </div>
@@ -667,7 +723,7 @@ const GearCore = (function () {
 
   /* cylinder wall between two rings (same 2D ring at z0 and z1), optional radial
      hole along +x centred at height zc, radius rs. Returns hole loop vertex ids. */
-  function cylWall(M, ring, R, z0, z1, outward, hole) {
+  function cylWall(M, ring, R, z0, z1, outward, hole, step) {
     const n = ring.length;
     const hint = ce => outward ? [ce[0], ce[1], 0] : [-ce[0], -ce[1], 0];
     if (!hole) {
@@ -679,7 +735,7 @@ const GearCore = (function () {
       return null;
     }
     const W = Math.asin(Math.min(0.999, hole.rs / R));
-    const q = Math.min(Math.floor(n / 2) - 1, Math.ceil(W / (TAU / n)) + 1);
+    const q = Math.min(Math.floor(n / 2) - 1, Math.ceil(W / (step || TAU / n)) + 1);
     // quads outside the window
     for (let i = q; i < n - q; i++) {
       const i1 = i + 1;
@@ -700,6 +756,66 @@ const GearCore = (function () {
     for (const [a, b, c] of triangulate(win, [hl])) M.triH(a.id, b.id, c.id, hint);
     return ids;
   }
+
+  /* ---------- shaped bores ----------
+     Bore polygon for round, D (one flat), double-D and keyway bores. The
+     polygon is CCW and star-shaped about the axis. D / DD flats sit on +X,
+     where the set screw goes; a keyway sits on +Y (90 deg from the screw) and
+     keeps index 0 at angle 0 with uniform arc spacing around it, so cylWall's
+     screw window on the round part works unchanged. Bore compensation c is
+     added to the diameter, the across-flat and the key width alike. */
+  function borePoly(d, c, shape, nC) {
+    const r = (d + c) / 2, step = TAU / nC, kind = (shape && shape.kind) || "round";
+    const gridBetween = (a0, a1) => { // grid angles strictly inside (a0, a1), not too close to the ends
+      const out = [];
+      for (let i = Math.ceil(a0 / step); i * step < a1; i++) { const a = i * step; if (a - a0 > 0.25 * step && a1 - a > 0.25 * step) out.push([r * Math.cos(a), r * Math.sin(a)]); }
+      return out;
+    };
+    if (kind === "d") {
+      const sx = Math.min(r - 0.02, shape.F + c - r), h = Math.sqrt(r * r - sx * sx), phi = Math.acos(sx / r);
+      const pts = [[sx, h]].concat(gridBetween(phi, TAU - phi), [[sx, -h]]);
+      return { kind, pts, r, rMax: r, step, flat: { x: sx, h, i0: pts.length - 1 }, depth: d - shape.F };
+    }
+    if (kind === "dd") {
+      const t = Math.min(r - 0.02, (shape.F + c) / 2), h = Math.sqrt(r * r - t * t), phi = Math.acos(t / r);
+      const pts = [[t, h]].concat(gridBetween(phi, Math.PI - phi), [[-t, h], [-t, -h]], gridBetween(Math.PI + phi, TAU - phi), [[t, -h]]);
+      return { kind, pts, r, rMax: r, step, flat: { x: t, h, i0: pts.length - 1 }, depth: (d - shape.F) / 2 };
+    }
+    if (kind === "key") {
+      const w = Math.min(r * 0.9, (shape.b + c) / 2), k = Math.max(r + 0.05, d / 2 + shape.t2 + c / 2);
+      const y0 = Math.sqrt(r * r - w * w), a1 = Math.atan2(y0, w), a2 = Math.PI - a1;
+      const pts = [[r, 0]].concat(gridBetween(0, a1), [[w, y0], [w, k], [-w, k], [-w, y0]], gridBetween(a2, TAU));
+      return { kind, pts, r, rMax: Math.hypot(w, k), step, key: { w, k, a1 }, flat: null };
+    }
+    return { kind: "round", pts: ringPts(r, nC, 0), r, rMax: r, step, flat: null };
+  }
+  /* Flat bore face on the plane x = s, spanning y0..y1 and z0..z1, with a radial
+     screw hole centred at (y = 0, z = hole.zc). Returns the hole loop ids in the
+     same order cylWall uses, so tube() joins them to the hub's outer hole. */
+  function planeWall(M, s, y0, y1, z0, z1, hole) {
+    const hint = () => [-1, 0, 0];
+    const rect = [[y0, z0], [y1, z0], [y1, z1], [y0, z1]].map(([y, z]) => { const p = [y, z]; p.id = M.v(s, y, z); return p; });
+    const hl = [], ids = [];
+    for (let i = 0; i < hole.ns; i++) {
+      const ps = TAU * i / hole.ns, y = hole.rs * Math.cos(ps), zz = hole.zc + hole.rs * Math.sin(ps);
+      const p = [y, zz]; p.id = M.v(s, y, zz); hl.push(p); ids.push(p.id);
+    }
+    for (const [a, b, c] of triangulate(rect, [hl])) M.triH(a.id, b.id, c.id, hint);
+    return ids;
+  }
+  /* Bore wall for any bore shape. Returns the screw-hole loop ids (or null). */
+  function boreWall(M, BP, z0, z1, screw) {
+    if (!screw || !BP.flat) return cylWall(M, BP.pts, BP.r, z0, z1, false, screw, BP.step);
+    const P = BP.pts, n = P.length, hint = ce => [-ce[0], -ce[1], 0];
+    for (let i = 0; i < n; i++) {
+      if (i === BP.flat.i0) continue; // the +X flat, built below with the hole
+      const p = P[i], q = P[(i + 1) % n];
+      const a = M.v(p[0], p[1], z0), b = M.v(q[0], q[1], z0), c = M.v(q[0], q[1], z1), d = M.v(p[0], p[1], z1);
+      M.triH(a, b, c, hint); M.triH(a, c, d, hint);
+    }
+    return planeWall(M, BP.flat.x, -BP.flat.h, BP.flat.h, z0, z1, screw);
+  }
+  const capRing = (O, BP) => (BP.kind === "round" ? annulus(O, BP.pts) : triangulate(O, [BP.pts]));
 
   /* ---------- gear solids ---------- */
   function twistFn(G, sys, R) {
@@ -752,13 +868,15 @@ const GearCore = (function () {
     const cMax = Math.max(Math.abs(off0.d), Math.abs(off1.d));
     const rInB = rf - Math.abs(off0.d) - 0.1 * mn - 0.05, rInT = rf - Math.abs(off1.d) - 0.1 * mn - 0.05;
     const rBore = (G.bore + (G.boreComp || 0)) / 2;
-    if (Math.min(rInB, rInT) < rBore + 0.25) { const e = new Error("bore"); e.code = "bore"; throw e; }
     const nC = Math.max(32, Math.min(96, Math.round(rBore * 2 * Math.PI / 0.35)));
+    const BP = borePoly(G.bore, G.boreComp || 0, G.shape, nC);
+    const rBoreMax = BP.rMax;
+    if (Math.min(rInB, rInT) < rBoreMax + 0.25) { const e = new Error("bore"); e.code = "bore"; throw e; }
     let hub = G.hub && G.hub.on ? G.hub : null;
     const rHub = hub ? Math.min(hub.D / 2, rInT - 0.2) : 0;
     const hubClamped = !!hub && rHub < hub.D / 2 - 1e-9;
     let hubDropped = false;
-    if (hub && rHub < rBore + 0.5) { hub = null; hubDropped = true; }
+    if (hub && rHub < rBoreMax + 0.5) { hubDropped = hub.D / 2 < rBoreMax + 0.5 ? "bore" : "roots"; hub = null; }
     const zTop = G.b + (hub ? hub.L : 0);
     const M_ = res.seam || 3;
     const pa = TAU / z;
@@ -778,25 +896,31 @@ const GearCore = (function () {
     const sBot = seam(tw(0), rInB), sTop = seam(tw(G.b), rInT);
     M.cap(sectors(pBot, sBot), 0, false);
     M.cap(sectors(pTop, sTop), G.b, true);
-    const bore = ringPts(rBore, nC, 0);
+    const bore = BP.pts;
     let webInfo = null;
-    const screw = hub && hub.screw > 0 && hub.L >= hub.screw + 1.2 ? { zc: G.b + hub.L / 2, rs: hub.screw / 2, ns: 20 } : null;
+    let screw = hub && hub.screw > 0 && hub.L >= hub.screw + 1.2 ? { zc: G.b + hub.L / 2, rs: hub.screw / 2, ns: 20 } : null;
+    let screwDropped = null;
+    if (screw && BP.flat && screw.rs > BP.flat.h - 0.15) { screw = null; screwDropped = "flat"; }
+    if (screw && BP.key) {
+      const q = Math.ceil(Math.asin(Math.min(0.999, screw.rs / BP.r)) / BP.step) + 1;
+      if ((q + 1) * BP.step >= BP.key.a1) { screw = null; screwDropped = "key"; }
+    }
     const web = G.web && G.web.on;
-    let rCore = hub ? rHub : rBore + Math.max(2.2, 1.5 * mn);
+    let rCore = hub ? rHub : rBoreMax + Math.max(2.2, 1.5 * mn);
     let rRim = rf - Math.max(2.5 * mn, 2) - cMax;
     const webOK = web && rRim - rCore >= 3.5 && G.web.t < G.b - 0.4;
     if (!webOK) {
-      M.cap(annulus(sBot, bore), 0, false);
+      M.cap(capRing(sBot, BP), 0, false);
       if (hub) {
         const hr = ringPts(rHub, Math.max(48, nC), 0);
         M.cap(annulus(sTop, hr), G.b, true);
         const hid = cylWall(M, hr, rHub, G.b, zTop, true, screw);
-        M.cap(annulus(hr, bore), zTop, true);
-        const bid = cylWall(M, bore, rBore, 0, zTop, false, screw);
+        M.cap(capRing(hr, BP), zTop, true);
+        const bid = boreWall(M, BP, 0, zTop, screw);
         if (hid && bid) tube(M, hid, bid, screw);
       } else {
-        M.cap(annulus(sTop, bore), G.b, true);
-        cylWall(M, bore, rBore, 0, zTop, false, null);
+        M.cap(capRing(sTop, BP), G.b, true);
+        boreWall(M, BP, 0, zTop, null);
       }
     } else {
       const tw_ = Math.max(1.2, Math.min(G.web.t, G.b - 0.4));
@@ -825,13 +949,14 @@ const GearCore = (function () {
         }
       }
       const hid = cylWall(M, coreR, rCore, tw_, zTop, true, screw);
-      M.cap(annulus(coreR, bore), zTop, true);
-      const bid = cylWall(M, bore, rBore, 0, zTop, false, screw);
+      M.cap(capRing(coreR, BP), zTop, true);
+      const bid = boreWall(M, BP, 0, zTop, screw);
       if (hid && bid) tube(M, hid, bid, screw);
       webInfo = { rim: rRim, core: rCore, holes: holes.length, t: tw_ };
     }
     return {
-      M, O, H, twist: tw, R, rb, ra, rf, pointed, rBore, rIn: Math.min(rInB, rInT), rHub: hub ? rHub : 0, hubClamped, hubDropped, zTop, webInfo, screw: !!screw,
+      M, O, H, twist: tw, R, rb, ra, rf, pointed, rBore, rBoreMax, borePoly: bore, boreKind: BP.kind, flatH: BP.flat ? BP.flat.h : 0, flatDepth: BP.depth || 0, screwDropped,
+      rIn: Math.min(rInB, rInT), rHub: hub ? rHub : 0, rCore, hubClamped, hubDropped, zTop, webInfo, screw: !!screw,
       chamferUsed: [Math.abs(off0.d), Math.abs(off1.d)], layers: L.zs.length,
     };
   }
@@ -951,6 +1076,9 @@ const GearCore = (function () {
   }
 
   /* ---------- STEP (AP214), faceted solid B-rep with coplanar faces merged ---------- */
+  const APP_NAME = "HamSammy's Gear Designer";
+  // ISO 10303-21 strings: single-quoted, with any apostrophe inside written doubled.
+  const stepStr = s => "'" + String(s).replace(/'/g, "''") + "'";
   function buildSTEP(M, name) {
     const V = M.V, T = M.T, nT = T.length / 3;
     const N = new Array(nT), D = new Array(nT);
@@ -1051,12 +1179,12 @@ const GearCore = (function () {
       faceIds.push(E(`ADVANCED_FACE('',(${bounds.map(x => "#" + x).join(",")}),#${pl},.T.)`));
     }
     const shell = E(`CLOSED_SHELL('',(${faceIds.map(x => "#" + x).join(",")}))`);
-    const brep = E(`MANIFOLD_SOLID_BREP('${name}',#${shell})`);
+    const brep = E(`MANIFOLD_SOLID_BREP(${stepStr(name)},#${shell})`);
     // product structure + units
     const appCtx = E(`APPLICATION_CONTEXT('core data for automotive mechanical design processes')`);
     E(`APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,#${appCtx})`);
     const prodCtx = E(`PRODUCT_CONTEXT('',#${appCtx},'mechanical')`);
-    const prod = E(`PRODUCT('${name}','${name}','',(#${prodCtx}))`);
+    const prod = E(`PRODUCT(${stepStr(name)},${stepStr(name)},'',(#${prodCtx}))`);
     E(`PRODUCT_RELATED_PRODUCT_CATEGORY('part',$,(#${prod}))`);
     const pdf = E(`PRODUCT_DEFINITION_FORMATION('','',#${prod})`);
     const pdc = E(`PRODUCT_DEFINITION_CONTEXT('part definition',#${appCtx},'design')`);
@@ -1068,14 +1196,14 @@ const GearCore = (function () {
     const unc = E(`UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-06),#${mm},'distance_accuracy_value','confusion accuracy')`);
     const ctx = E(`( GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#${unc})) GLOBAL_UNIT_ASSIGNED_CONTEXT((#${mm},#${rad},#${sr})) REPRESENTATION_CONTEXT('Context #1','3D Context with UNIT and UNCERTAINTY') )`);
     const origin = E(`AXIS2_PLACEMENT_3D('',#${E(`CARTESIAN_POINT('',(0.,0.,0.))`)},#${dir(0, 0, 1)},#${dir(1, 0, 0)})`);
-    const absr = E(`ADVANCED_BREP_SHAPE_REPRESENTATION('${name}',(#${origin},#${brep}),#${ctx})`);
+    const absr = E(`ADVANCED_BREP_SHAPE_REPRESENTATION(${stepStr(name)},(#${origin},#${brep}),#${ctx})`);
     E(`SHAPE_DEFINITION_REPRESENTATION(#${pds},#${absr})`);
     void ctxLines;
     const now = new Date().toISOString().slice(0, 19);
     const text = [
       "ISO-10303-21;", "HEADER;",
-      "FILE_DESCRIPTION(('Gear Designer faceted solid'),'2;1');",
-      `FILE_NAME('${name}.step','${now}',('Gear Designer'),(''),'Gear Designer','Gear Designer','');`,
+      `FILE_DESCRIPTION((${stepStr(APP_NAME + " faceted solid")}),'2;1');`,
+      `FILE_NAME(${stepStr(name + ".step")},'${now}',(${stepStr(APP_NAME)}),(''),${stepStr(APP_NAME)},${stepStr(APP_NAME)},'');`,
       "FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));", "ENDSEC;", "DATA;",
     ].concat(lines, ["ENDSEC;", "END-ISO-10303-21;", ""]).join("\n");
     let badEdgeUse = 0; for (const [, r] of ecMap) if (r.uses !== 2) badEdgeUse++;
@@ -1085,7 +1213,7 @@ const GearCore = (function () {
   return {
     TAU, inv, invInverse, toothSystem, xMin, thicknessAt, meshCalc, contactRatio, spaceHalfAngle,
     halfSpace, assembleOutline, buildExternal, buildInternal, volumeArea, checkManifold, buildSTL, buildSTEP,
-    triangulate, annulus,
+    triangulate, annulus, borePoly,
   };
 })();
 if (typeof module !== "undefined") module.exports = GearCore;
@@ -1122,8 +1250,9 @@ const DEFAULTS = {
   unit: "mod", m: 0.8, dp: "32", dpCustom: 32, alpha: "20", form: "full", ha: 1, hf: 1.25, rho: 0.38,
   mode: "single", aType: "external", z1: 11, x1: 0.36, b1: 8, trunc1: 0, wallA: 4,
   bType: "external", z2: 56, x2: 0, b2: 7, boreB: "5", webB: true, wallB: 4,
+  boreShapeB: "round", flatB: 4.5, keyAutoB: true, keyWB: 2, keyT2B: 1,
   beta: 0, hand: "R", herring: false, slices: 0,
-  bore: "3.175", boreCustom: 3.5, boreComp: 0.15, hub: true, hubD: 6.2, hubL: 4, screw: "2.2", web: "solid", webT: 3, holes: 5,
+  bore: "3.175", boreCustom: 3.5, boreShape: "round", flat: 2.65, keyAuto: true, keyW: 2, keyT2: 1, boreComp: 0.15, hub: true, hubD: 6.2, hubL: 4, screw: "2.2", web: "solid", webT: 3, holes: 5,
   j: 0.1, cdAdj: 0, chamB: 0.4, chamT: 0.2, res: 16, material: "PETG", nozzle: "0.4", infill: 40,
 };
 const PRESETS = [
@@ -1138,6 +1267,8 @@ const PRESETS = [
     set: { mode: "single", aType: "external", unit: "dp", dp: "32", z1: 14, x1: 0.2, trunc1: 0.05, b1: 6, bore: "3.175", hub: true, hubD: 8, hubL: 5, screw: "3.2", web: "solid", material: "PETG", beta: 0, herring: false } },
   { name: "48P Pinion 20T", desc: "Fine pitch. Expect the nozzle warning at 0.4 mm -- this is where a 0.25 mm nozzle or resin starts to earn its keep.",
     set: { mode: "single", aType: "external", unit: "dp", dp: "48", z1: 20, x1: 0, b1: 5, bore: "3.175", hub: false, screw: "0", web: "solid", material: "PETG", beta: 0, herring: false } },
+  { name: "N20 Gearmotor Pinion Mod 0.5 16T", desc: "A D-bore pinion for the common N20 / micro metal gearmotor (3 mm shaft, 2.5 across the flat). An M1.6 grub screw bears on the flat. Measure your shaft -- flats vary.",
+    set: { mode: "single", aType: "external", unit: "mod", m: 0.5, z1: 16, x1: 0.1, trunc1: 0.1, b1: 5, bore: "3", boreShape: "d", flat: 2.5, hub: true, hubD: 5.5, hubL: 3.5, screw: "1.8", web: "solid", material: "PETG", beta: 0, herring: false } },
   { name: "Mod 1.0 Calibration Pair 12:30", desc: "Big teeth and cheap PLA for dialling in backlash and bore compensation on a new filament before you print the real thing.",
     set: { mode: "mesh", aType: "external", unit: "mod", m: 1, z1: 12, x1: 0.3, b1: 6, bore: "5", hub: false, screw: "0", web: "solid",
       bType: "external", z2: 30, x2: 0, b2: 6, boreB: "5", webB: false, material: "PLA", beta: 0, herring: false } },
@@ -1153,7 +1284,7 @@ const PRESETS = [
       bType: "internal", z2: 60, b2: 8, wallB: 4, material: "PETG", beta: 0, herring: false } },
 ];
 const IDS = Object.keys(DEFAULTS);
-const CHECKS = new Set(["webB", "herring", "hub"]);
+const CHECKS = new Set(["webB", "herring", "hub", "keyAuto", "keyAutoB"]);
 const FMT = {
   m: v => (+v).toFixed(2).replace(/0$/, ""), rho: v => (+v).toFixed(2), x1: v => (+v).toFixed(2), x2: v => (+v).toFixed(2),
   b1: v => (+v).toFixed(1).replace(/\.0$/, ""), b2: v => (+v).toFixed(1).replace(/\.0$/, ""), trunc1: v => (+v).toFixed(2) + " m",
@@ -1180,12 +1311,15 @@ function readP() {
   const mode = g("mode").value;
   let aType = g("aType").value; if (mode === "mesh") aType = "external";
   const bore = g("bore").value === "custom" ? num("boreCustom") : parseFloat(g("bore").value);
+  const keyAutoOn = sfx => basicMode || g("keyAuto" + sfx).checked;
   return {
     unit, m, dp: dpVal, alpha: parseFloat(g("alpha").value), form, ha, hf, rho: num("rho"),
     mode, aType, z1: Math.round(num("z1")), x1: aType === "internal" ? 0 : num("x1"), b1: num("b1"), trunc1: num("trunc1"), wallA: num("wallA"),
     bType: g("bType").value, z2: Math.round(num("z2")), x2: g("bType").value === "internal" ? 0 : num("x2"), b2: num("b2"), boreB: parseFloat(g("boreB").value), webB: g("webB").checked, wallB: num("wallB"),
     beta: num("beta"), hand: g("hand").value, herring: g("herring").checked && num("beta") > 0, slices: Math.round(num("slices")),
-    bore, boreComp: num("boreComp"), hub: g("hub").checked, hubD: num("hubD"), hubL: num("hubL"), screw: parseFloat(g("screw").value), web: g("web").value, webT: num("webT"), holes: Math.round(num("holes")),
+    bore, boreShape: g("boreShape").value, flat: num("flat"), keyAuto: keyAutoOn(""), keyW: num("keyW"), keyT2: num("keyT2"),
+    boreShapeB: g("boreShapeB").value, flatB: num("flatB"), keyAutoB: keyAutoOn("B"), keyWB: num("keyWB"), keyT2B: num("keyT2B"),
+    boreComp: num("boreComp"), hub: g("hub").checked, hubD: num("hubD"), hubL: num("hubL"), screw: parseFloat(g("screw").value), web: g("web").value, webT: num("webT"), holes: Math.round(num("holes")),
     j: num("j"), cdAdj: num("cdAdj"), chamB: num("chamB"), chamT: num("chamT"), res: Math.round(num("res")),
     material: g("material").value, nozzle: parseFloat(g("nozzle").value), infill: num("infill") / 100,
   };
@@ -1194,20 +1328,43 @@ function readP() {
 /* ============================================================
    MODEL: build A (and B), mesh calc, metrics
    ============================================================ */
+/* Shaped bores. DIN 6885-1 parallel keys: shaft range -> key b and hub depth t2. */
+const DIN_KEYS = [[6, 8, 2, 1.0], [8, 10, 3, 1.4], [10, 12, 4, 1.8], [12, 17, 5, 2.3], [17, 22, 6, 2.8], [22, 30, 8, 3.3]];
+function dinKey(d) { const r = DIN_KEYS.find(([lo, hi]) => d > lo && d <= hi); return r ? { b: r[2], t2: r[3] } : null; }
+function defaultFlat(d, kind) { return +(kind === "dd" ? d - 1 : d - 0.5).toFixed(2); }
+function resolveShape(kind, d, F, auto, b, t2) {
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  if (kind === "d") return { kind, F: clamp(+F || defaultFlat(d, kind), 0.55 * d, d - 0.1) };
+  if (kind === "dd") return { kind, F: clamp(+F || defaultFlat(d, kind), 0.5 * d, d - 0.2) };
+  if (kind === "key") {
+    const din = auto ? dinKey(d) : null;
+    const k = din || { b: +b || 1, t2: +t2 || 0.5 };
+    return { kind, b: clamp(k.b, 0.5, 0.6 * d), t2: clamp(k.t2, 0.3, 0.45 * d), din: !!din };
+  }
+  return { kind: "round" };
+}
+function shapeOf(P, key) {
+  return key === "A" ? resolveShape(P.boreShape, P.bore, P.flat, P.keyAuto, P.keyW, P.keyT2)
+                     : resolveShape(P.boreShapeB, P.boreB, P.flatB, P.keyAutoB, P.keyWB, P.keyT2B);
+}
+function shapeTag(sh) {
+  const n = v => +(+v).toFixed(2);
+  return sh.kind === "d" ? `D${n(sh.F)}` : sh.kind === "dd" ? `DD${n(sh.F)}` : sh.kind === "key" ? `K${n(sh.b)}x${n(sh.t2)}` : "";
+}
 function resFor(flank) { return { tip: 3, fillet: Math.max(6, Math.round(flank * 0.6)), flank, land: 3, seam: 3 }; }
 function gearSpecs(P, sys, mc) {
   const k = mc ? mc.k : 0;
   const common = { j: P.j, chamB: P.chamB, chamT: P.chamT, hand: P.hand, herring: P.herring, slices: P.slices };
   const A = P.aType === "internal"
     ? Object.assign({ internal: true, z: P.z1, b: P.b1, wall: P.wallA }, common)
-    : Object.assign({ internal: false, z: P.z1, x: P.x1, b: P.b1, trunc: P.trunc1 * P.m, k, bore: P.bore, boreComp: P.boreComp,
+    : Object.assign({ internal: false, z: P.z1, x: P.x1, b: P.b1, trunc: P.trunc1 * P.m, k, bore: P.bore, boreComp: P.boreComp, shape: shapeOf(P, "A"),
         hub: { on: P.hub, D: P.hubD, L: P.hubL, screw: P.screw }, web: { on: P.web === "web", t: P.webT, n: P.holes } }, common);
   let B = null;
   if (P.mode === "mesh") {
     const handB = P.bType === "internal" ? P.hand : (P.hand === "R" ? "L" : "R");
     B = P.bType === "internal"
       ? Object.assign({}, common, { internal: true, z: P.z2, b: P.b2, wall: P.wallB, hand: handB })
-      : Object.assign({}, common, { internal: false, z: P.z2, x: P.x2, b: P.b2, trunc: 0, k, bore: P.boreB, boreComp: P.boreComp,
+      : Object.assign({}, common, { internal: false, z: P.z2, x: P.x2, b: P.b2, trunc: 0, k, bore: P.boreB, boreComp: P.boreComp, shape: shapeOf(P, "B"),
           hub: { on: false }, web: { on: P.webB, t: P.webT, n: P.holes }, hand: handB });
   }
   return { A, B };
@@ -1290,9 +1447,22 @@ function checks(o) {
       if (wall < minL * P.nozzle) add(4, "bad", `${nm}: only ${wall.toFixed(2)} mm of plastic between the bore and the tooth roots -- the gear will split. Pick a smaller bore or more teeth.`);
       if (spec.x < GearCore.xMin(sys, spec.z) - 0.005) add(6, "warn", `${nm}: ${spec.z} teeth at x = ${spec.x.toFixed(2)} will undercut, weakening the root. Try Auto (x ≈ ${(Math.ceil(GearCore.xMin(sys, spec.z) * 100) / 100).toFixed(2)}).`);
       if (P.material === "PLA" && spec.z <= 20 && spec.bore <= 5 && (P.mode === "single" || key === "A")) add(8, "warn", "PLA softens near 55 °C, and motor pinions get hot. PETG or Nylon is safer.");
-      if (g.hubDropped) add(9, "warn", `${nm}: no room for a hub inside the tooth roots -- hub left off. Use a smaller bore or more teeth.`);
+      if (g.hubDropped === "bore") add(9, "warn", `${nm}: hub Ø is too small for the ${spec.shape && spec.shape.kind === "key" ? "keyway" : "bore"} -- hub left off. Make the hub at least ${(2 * g.rBoreMax + 1.2).toFixed(1)} mm.`);
+      else if (g.hubDropped) add(9, "warn", `${nm}: no room for a hub inside the tooth roots -- hub left off. Use a smaller bore or more teeth.`);
       else if (g.hubClamped) add(11, "warn", `${nm}: hub Ø limited to ${(2 * g.rHub).toFixed(1)} mm so it stays inside the tooth roots.`);
-      if (spec.hub && spec.hub.on && spec.hub.screw > 0 && !g.screw && !g.hubDropped) add(11, "warn", `${nm}: hub is too short for that set screw -- lengthen it to at least ${(spec.hub.screw + 1.2).toFixed(1)} mm.`);
+      const sh = spec.shape || { kind: "round" };
+      if (sh.kind === "key") {
+        const body = g.webInfo ? g.webInfo.core : g.rIn;
+        const outer = g.rHub ? Math.min(g.rHub, body) : body, where = g.rHub && g.rHub <= body ? "hub" : "tooth roots";
+        const wl = (outer - g.rBoreMax) / P.nozzle;
+        if (wl < 1) add(4, "bad", `${nm}: the keyway almost breaks through the ${where}. Use a smaller key, a bigger hub, or a D bore.`);
+        else if (wl < minL) add(9, "warn", `${nm}: only ${wl.toFixed(1)} lines of plastic outside the keyway -- it may split under load. Widen the hub or use a D bore.`);
+        if (spec.bore <= 6) add(12, "warn", `${nm}: DIN keys start at 6 mm shafts; a printed keyway this small won't last. A D bore is stronger here.`);
+      }
+      if ((sh.kind === "d" || sh.kind === "dd") && g.flatDepth < 0.2) add(10, "warn", `${nm}: a ${g.flatDepth.toFixed(2)} mm flat is shallower than one layer line can resolve -- the gear may still slip. Check your across-flat measurement.`);
+      if (g.screwDropped === "flat") add(11, "warn", `${nm}: the set screw is wider than the flat, so it was left out. Pick M1.6, or measure a deeper flat.`);
+      if (g.screwDropped === "key") add(11, "warn", `${nm}: the set screw would run into the keyway on this small bore, so it was left out. Pick a smaller screw.`);
+      if (spec.hub && spec.hub.on && spec.hub.screw > 0 && !g.screw && !g.hubDropped && !g.screwDropped) add(11, "warn", `${nm}: hub is too short for that set screw -- lengthen it to at least ${(spec.hub.screw + 1.2).toFixed(1)} mm.`);
       if (spec.web && spec.web.on && !g.webInfo) add(12, "warn", `${nm}: too small for a web -- printed solid. Webs need root Ø ≥ 30 mm and room between hub and rim.`);
     }
     const rootL = linesOf(m.root, P);
@@ -1319,7 +1489,7 @@ function syncUI(P) {
   enable("ha", P.form === "custom"); enable("hf", P.form === "custom");
   const mesh = P.mode === "mesh";
   [...$("pairSw").children].forEach(b => b.classList.toggle("active", b.dataset.v === P.mode));
-  show("fsB", mesh); show("rowAType", !mesh); show("focusSw", mesh); show("dlBoth", mesh); show("legendKey", mesh);
+  show("fsB", mesh); show("rowAType", !mesh); show("focusSw", mesh); show("dlBoth", mesh); show("dlBothStep", mesh); show("legendKey", mesh);
   show("rowCd", mesh);
   $("legA").textContent = mesh ? "Gear A · pinion" : "Gear";
   const aInt = P.aType === "internal";
@@ -1333,6 +1503,8 @@ function syncUI(P) {
   $("handHint").textContent = mesh && hel && !P.herring ? (bInt ? "Ring gets the same hand as the pinion." : `Gear B gets the opposite hand (${P.hand === "R" ? "left" : "right"}).`) : "";
   show("handHint", !!$("handHint").textContent);
   enable("hubD", P.hub); enable("hubL", P.hub); enable("screw", P.hub);
+  syncShapeUI(P, "", P.bore, P.boreShape, true);
+  syncShapeUI(P, "B", P.boreB, P.boreShapeB, mesh && !bInt);
   const webOn = P.web === "web" || (mesh && P.webB);
   enable("webT", webOn); enable("holes", webOn);
   $("matNote").textContent = MATERIALS[P.material].note;
@@ -1342,6 +1514,23 @@ function syncUI(P) {
   $("animBtn").disabled = reduced; show("animBtn", mesh); if (!mesh && animOn) { animOn = false; }
   $("autoX1").disabled = aInt;
   for (const id in FMT) { const s = $(id + "V"); if (s) s.textContent = FMT[id]($(id).value); }
+}
+
+function syncShapeUI(P, sfx, d, kind, visible) {
+  [...$("boreShape" + sfx + "Sw").children].forEach(b => b.classList.toggle("active", b.dataset.v === kind));
+  show("rowShape" + sfx, visible);
+  show("rowFlat" + sfx, visible && (kind === "d" || kind === "dd"));
+  show("rowKey" + sfx, visible && kind === "key");
+  if (kind === "d" || kind === "dd") {
+    const sh = resolveShape(kind, d, +$("flat" + sfx).value), dep = kind === "dd" ? (d - sh.F) / 2 : d - sh.F;
+    $("flat" + sfx + "Hint").textContent = kind === "dd" ? `${dep.toFixed(2)}/side` : `${dep.toFixed(2)} deep`;
+  }
+  if (kind === "key") {
+    const din = dinKey(d), auto = basicMode || $("keyAuto" + sfx).checked;
+    if (auto && din) { $("keyW" + sfx).value = din.b; $("keyT2" + sfx).value = din.t2; }
+    const lock = auto && !!din;
+    $("keyW" + sfx).disabled = lock; $("keyT2" + sfx).disabled = lock;
+  }
 }
 
 /* ============================================================
@@ -1398,9 +1587,13 @@ function update() {
   $("hudtype").textContent = mesh ? `${kind} ${P.z1}:${P.z2}` : `${kind} ${P.z1}T`;
   $("planlbl").textContent = mesh ? "Plan view · mesh zone" : "Plan view · profile";
   $("dl").disabled = !g; $("dlStep").disabled = !g;
+  const pairOK = mesh && !!o.mc && !!o.A && !!o.B;
+  $("dlBoth").disabled = !pairOK; $("dlBothStep").disabled = !pairOK;
   if (g) lastGood = o;
   pushScene(o);
   drawPlan();
+  secSummaries(P);
+  syncSecAll();
 }
 
 /* ============================================================
@@ -1552,7 +1745,7 @@ function drawPlan() {
     const pts = g.O.pts;
     if (g.Rout) { const c = [it.tx, it.ty]; x.arc(X(c), Y(c), g.Rout * k, 0, TAU, false); x.closePath(); }
     pts.forEach((p, i) => { const q = tf(p); if (i) x.lineTo(X(q), Y(q)); else x.moveTo(X(q), Y(q)); }); x.closePath();
-    if (!g.Rout && g.rBore) { const c = [it.tx, it.ty]; x.moveTo(X(c) + g.rBore * k, Y(c)); x.arc(X(c), Y(c), g.rBore * k, 0, TAU, true); }
+    if (!g.Rout && g.borePoly) { g.borePoly.forEach((p, i) => { const q = tf(p); if (i) x.lineTo(X(q), Y(q)); else x.moveTo(X(q), Y(q)); }); x.closePath(); }
     x.fillStyle = fill; x.fill("evenodd"); x.strokeStyle = stroke; x.lineWidth = 1.4; x.stroke();
     const m = o[key + "m"], c = [it.tx, it.ty];
     circle(c, m.pitchD / 2, "rgba(53,167,224,.85)", [5, 4]);
@@ -1601,12 +1794,12 @@ const framed = (() => { try { return window.self !== window.top; } catch (e) { r
 if (framed && window.claude && typeof window.claude.use === "function") {
   window.claude.use("downloads").then(d => { downloadsCap = d; }).catch(() => {});
 }
-async function saveFile(name, data, mime) {
+async function saveFile(name, data, mime, quiet) {
   if (framed && downloadsCap) {
     try {
       await downloadsCap.save({ filename: name + ".txt", data });
-      setNote("", `Saved as ${name}.txt -- this viewer can't hand back a .${name.split(".").pop()} directly, so drop the ".txt" from the filename before opening it.`, true);
-      return true;
+      if (!quiet) setNote("", `Saved as ${name}.txt -- this viewer can't hand back a .${name.split(".").pop()} directly, so drop the ".txt" from the filename before opening it.`, true);
+      return "txt";
     } catch (e) {
       if (e && e.code === "declined") { setNote("", "Download cancelled.", true); return false; }
       if (e && e.code === "rate_limited") { setNote("warn", "A save prompt is already open -- finish that one first.", true); return false; }
@@ -1616,23 +1809,32 @@ async function saveFile(name, data, mime) {
   a.href = URL.createObjectURL(new Blob([data], { type: mime }));
   a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  if (framed) setNote("warn", "If nothing downloaded just now: this preview pane can restrict downloads -- open the page in its own tab to export instead.", true);
-  return true;
+  if (framed && !quiet) setNote("warn", "If nothing downloaded just now: this preview pane can restrict downloads -- open the page in its own tab to export instead.", true);
+  return "anchor";
 }
 function fileName(P, key) {
   const spec = key === "A" ? { z: P.z1, x: P.x1, b: P.b1, internal: P.aType === "internal", bore: P.bore } : { z: P.z2, x: P.x2, b: P.b2, internal: P.bType === "internal", bore: P.boreB };
+  const tag = spec.internal ? "" : shapeTag(shapeOf(P, key));
   const pitch = P.unit === "dp" ? `${+P.dp.toFixed(2)}P` : `m${+P.m.toFixed(3)}`;
-  let n = `gear_${pitch}_z${spec.z}` + (spec.internal ? "" : `_x${+spec.x.toFixed(2)}`) + `_b${+spec.b.toFixed(2)}` + (spec.internal ? "" : `_bore${+spec.bore.toFixed(3)}`);
+  let n = `gear_${pitch}_z${spec.z}` + (spec.internal ? "" : `_x${+spec.x.toFixed(2)}`) + `_b${+spec.b.toFixed(2)}` + (spec.internal ? "" : `_bore${+spec.bore.toFixed(3)}${tag}`);
   if (P.beta > 0) n += P.herring ? `_hb${P.beta}` : `_hel${P.beta}${key === "A" || P.bType === "internal" ? P.hand : (P.hand === "R" ? "L" : "R")}`;
   if (spec.internal) n += "_int";
   return n;
 }
+const pairLabel = (P, key) => key === "A" ? "pinion" : (P.bType === "internal" ? "ring" : "gear");
+const pause = ms => new Promise(r => setTimeout(r, ms));
+function checkedGear(o, key) {
+  const g = o[key];
+  const who = o.P.mode === "mesh" ? `the ${pairLabel(o.P, key)}` : "the gear";
+  if (!g) { setNote("bad", `Export stopped: ${who} didn't build. Check the red note above.`, true); return null; }
+  const mf = GearCore.checkManifold(g.M);
+  if (!mf.ok) { setNote("bad", `Export stopped: ${who} has ${mf.badEdges} open edges. Change a setting slightly and try again -- and please report the settings (Copy link).`, true); return null; }
+  return g;
+}
 function fullGear(key) {
   const o = model(readP(), true);
-  const g = o[key]; if (!g) return null;
-  const mf = GearCore.checkManifold(g.M);
-  if (!mf.ok) { setNote("bad", `Export stopped: the solid has ${mf.badEdges} open edges. Change a setting slightly and try again -- and please report the settings (Copy link).`, true); return null; }
-  return { o, g };
+  const g = checkedGear(o, key);
+  return g ? { o, g } : null;
 }
 async function exportSTL(key) {
   const r = fullGear(key); if (!r) return;
@@ -1650,7 +1852,54 @@ async function exportSTEP(key) {
 }
 $("dl").addEventListener("click", () => exportSTL(current && current.P.mode === "mesh" ? focus : "A"));
 $("dlStep").addEventListener("click", () => exportSTEP(current && current.P.mode === "mesh" ? focus : "A"));
-$("dlBoth").addEventListener("click", async () => { await exportSTL("A"); await exportSTL("B"); });
+/* Mesh pair: both gears, one full-resolution model build, two separate files.
+   Both are built and checked before either is saved, so a failure never
+   leaves half a pair. */
+let exporting = false;
+async function exportBoth(fmt) {
+  if (exporting) return;
+  exporting = true;
+  const btns = ["dl", "dlStep", "dlBoth", "dlBothStep"].map($);
+  const was = btns.map(b => b.disabled);
+  btns.forEach(b => { b.disabled = true; });
+  try {
+    setNote("", "Building both gears…", true);
+    await pause(30);
+    const o = model(readP(), true), P = o.P;
+    if (P.mode !== "mesh") { setNote("bad", "Export stopped: switch to Mesh pair first.", true); return; }
+    if (!o.mc) { setNote("bad", "Export stopped: these two gears don't mesh -- fix the red note first.", true); return; }
+    let names = { A: fileName(P, "A"), B: fileName(P, "B") };
+    if (names.A === names.B) names = { A: names.A + "_A", B: names.B + "_B" };
+    const ext = fmt === "step" ? ".step" : ".stl", FMTN = fmt === "step" ? "STEP" : "STL";
+    const files = [];
+    for (const [i, key] of ["A", "B"].entries()) {
+      setNote("", `Building ${FMTN} ${i + 1} of 2 (${pairLabel(P, key)})…`, true);
+      await pause(30);
+      const g = checkedGear(o, key); if (!g) return;
+      if (fmt === "step") {
+        const st = GearCore.buildSTEP(g.M, names[key]);
+        if (st.badEdgeUse) { setNote("bad", `Export stopped: STEP topology check failed on the ${pairLabel(P, key)}. Please report the settings (Copy link).`, true); return; }
+        files.push({ name: names[key] + ext, data: st.text, mime: "application/step" });
+      } else {
+        files.push({ name: names[key] + ext, data: GearCore.buildSTL(g.M.positions(), "gear-designer binary STL " + names[key]), mime: "model/stl" });
+      }
+    }
+    let how;
+    for (const [i, f] of files.entries()) {
+      if (i) await pause(400);
+      how = await saveFile(f.name, f.data, f.mime, true);
+      if (!how) return;
+    }
+    const cd = (o.mc.aw + P.cdAdj).toFixed(3);
+    const list = files.map(f => f.name + (how === "txt" ? ".txt" : "")).join(" and ");
+    setNote("", `Saved ${list}. Centre distance ${cd} mm.` + (how === "txt" ? ' Drop the ".txt" from both filenames before opening them.' : ""), true);
+  } finally {
+    btns.forEach((b, i) => { b.disabled = was[i]; });
+    exporting = false;
+  }
+}
+$("dlBoth").addEventListener("click", () => exportBoth("stl"));
+$("dlBothStep").addEventListener("click", () => exportBoth("step"));
 
 /* ============================================================
    WIRING
@@ -1670,11 +1919,45 @@ function applyValues(vals) {
 }
 function applyPreset(p) {
   applyValues(Object.assign({}, DEFAULTS, p.set));
+  settleFlats(p.set);
   $("presetDesc").textContent = p.desc;
   focus = "A"; fitKey = ""; update(); scheduleSaveHash();
 }
+function settleFlats(set) {
+  flatTouched[""] = "flat" in set; flatTouched.B = "flatB" in set;
+  syncFlatDefault(""); syncFlatDefault("B");
+}
 function markCustom() { if ($("preset").value !== "-1") { $("preset").value = "-1"; $("presetDesc").textContent = "Edited -- pick a preset to start over."; } }
-IDS.forEach(id => { const el = $(id); if (!el) return; ["input", "change"].forEach(ev => el.addEventListener(ev, () => { if (id === "z1") $("z1N").value = el.value; if (id === "z2") $("z2N").value = el.value; markCustom(); update(); scheduleSaveHash(); })); });
+/* Across-flat follows the bore (d - 0.5, or d - 1 for double-D) until the user types their own. */
+const flatTouched = { "": false, B: false };
+function boreOf(sfx) { return sfx ? parseFloat($("boreB").value) : ($("bore").value === "custom" ? +$("boreCustom").value : parseFloat($("bore").value)); }
+function syncFlatDefault(sfx) {
+  const kind = $("boreShape" + sfx).value, d = boreOf(sfx);
+  if (kind !== "d" && kind !== "dd") return;
+  const F = +$("flat" + sfx).value, sh = resolveShape(kind, d, F);
+  if (!flatTouched[sfx] || Math.abs(sh.F - F) > 1e-9) $("flat" + sfx).value = flatTouched[sfx] ? sh.F : defaultFlat(d, kind);
+}
+function preUpdate(id) {
+  if (id === "bore" || id === "boreCustom") syncFlatDefault("");
+  if (id === "boreB") syncFlatDefault("B");
+  if (id === "flat") flatTouched[""] = true;
+  if (id === "flatB") flatTouched.B = true;
+}
+IDS.forEach(id => { const el = $(id); if (!el) return; ["input", "change"].forEach(ev => el.addEventListener(ev, () => { if (id === "z1") $("z1N").value = el.value; if (id === "z2") $("z2N").value = el.value; preUpdate(id); markCustom(); update(); scheduleSaveHash(); })); });
+["", "B"].forEach(sfx => [...$("boreShape" + sfx + "Sw").children].forEach(b => b.addEventListener("click", () => {
+  $("boreShape" + sfx).value = b.dataset.v; syncFlatDefault(sfx); markCustom(); update(); scheduleSaveHash();
+})));
+$("shaftPreset").addEventListener("change", () => {
+  const v = $("shaftPreset").value; if (!v) return;
+  const [d, kind, F] = v.split("|");
+  const opt = [...$("bore").options].find(o => o.value === d);
+  if (opt) $("bore").value = d; else { $("bore").value = "custom"; $("boreCustom").value = d; }
+  $("boreShape").value = kind;
+  if (F) { $("flat").value = F; flatTouched[""] = true; } else { flatTouched[""] = false; syncFlatDefault(""); }
+  if (kind === "key") $("keyAuto").checked = true;
+  $("shaftPreset").value = "";
+  markCustom(); update(); scheduleSaveHash();
+});
 [["z1N", "z1"], ["z2N", "z2"]].forEach(([n, r]) => $(n).addEventListener("change", () => { let v = Math.round(+$(n).value); v = Math.max(+$(r).min, Math.min(+$(r).max, v || +$(r).value)); $(n).value = v; $(r).value = v; markCustom(); update(); scheduleSaveHash(); }));
 $("unit").addEventListener("change", () => {
   // keep the tooth size when switching units
@@ -1693,12 +1976,48 @@ function autoX(zId, xId) {
 }
 $("autoX1").addEventListener("click", () => autoX("z1", "x1"));
 $("autoX2").addEventListener("click", () => autoX("z2", "x2"));
-$("reset").addEventListener("click", () => { applyValues(Object.assign({}, DEFAULTS, PRESETS[0].set)); $("preset").value = "0"; $("presetDesc").textContent = PRESETS[0].desc; focus = "A"; animOn = false; fitKey = ""; update(); scheduleSaveHash(); });
+$("reset").addEventListener("click", () => { applyValues(Object.assign({}, DEFAULTS, PRESETS[0].set)); settleFlats(PRESETS[0].set); $("preset").value = "0"; $("presetDesc").textContent = PRESETS[0].desc; focus = "A"; animOn = false; fitKey = ""; update(); scheduleSaveHash(); });
 // converters
 $("cvMM").addEventListener("input", () => { $("cvIN").value = (+$("cvMM").value / 25.4).toFixed(4); });
 $("cvIN").addEventListener("input", () => { $("cvMM").value = (+$("cvIN").value * 25.4).toFixed(3); });
 $("cvMod").addEventListener("input", () => { const v = +$("cvMod").value; if (v > 0) $("cvDP").value = (25.4 / v).toFixed(3); });
 $("cvDP").addEventListener("input", () => { const v = +$("cvDP").value; if (v > 0) $("cvMod").value = (25.4 / v).toFixed(5); });
+
+/* Collapsible sections. Every section starts collapsed on every load; the open/closed
+   state is display-only -- not in the share link, not in storage. */
+function visibleSecs() { return [...document.querySelectorAll("#pbody fieldset.sec")].filter(f => f.offsetParent !== null || getComputedStyle(f).display !== "none"); }
+function setSec(fs, open) {
+  fs.classList.toggle("collapsed", !open);
+  fs.querySelector(".secTog").setAttribute("aria-expanded", String(open));
+}
+function syncSecAll() {
+  const anyOpen = visibleSecs().some(f => !f.classList.contains("collapsed"));
+  $("secAll").textContent = anyOpen ? "Collapse all" : "Expand all";
+}
+document.querySelectorAll("#pbody fieldset.sec").forEach(fs => {
+  fs.querySelector(".secTog").addEventListener("click", () => { setSec(fs, fs.classList.contains("collapsed")); syncSecAll(); });
+});
+$("secAll").addEventListener("click", () => {
+  const open = !visibleSecs().some(f => !f.classList.contains("collapsed"));
+  visibleSecs().forEach(f => setSec(f, open)); syncSecAll();
+});
+function secSummaries(P) {
+  const n = (v, d) => +(+v).toFixed(d == null ? 2 : d);
+  const ps = $("preset"), pi = +ps.value;
+  const sum = {
+    secPreset: pi >= 0 && PRESETS[pi] ? PRESETS[pi].name : "Custom",
+    secSetup: P.mode === "mesh" ? `Mesh pair · ${P.bType === "internal" ? "ring" : "external"}` : `Single · ${P.aType === "internal" ? "ring" : "external"}`,
+    secTooth: `${P.unit === "dp" ? n(P.dp) + "P" : "m" + n(P.m, 3)} · ${P.alpha}° · ${P.form}`,
+    secGearA: `${P.z1}T · ` + (P.aType === "internal" && P.mode !== "mesh" ? `wall ${n(P.wallA, 1)}` : `x${n(P.x1)}`) + ` · b${n(P.b1, 1)}`,
+    fsB: `${P.z2}T · ` + (P.bType === "internal" ? `wall ${n(P.wallB, 1)}` : `x${n(P.x2)} · bore ${n(P.boreB, 3)}${shapeTag(shapeOf(P, "B")) ? " " + shapeTag(shapeOf(P, "B")) : ""}`) + ` · b${n(P.b2, 1)}`,
+    secHelix: P.beta > 0 ? (P.herring ? `herringbone ${P.beta}°` : `${P.beta}° ${P.hand}`) : "spur",
+    fsHub: (() => { const sh = shapeOf(P, "A"), t = shapeTag(sh); return `${n(P.bore, 3)} ${t || "round"}` + (P.hub ? ` · hub ${n(P.hubD, 1)}×${n(P.hubL, 1)}` + (P.screw > 0 ? ` · ${$("screw").selectedOptions[0].textContent}` : "") : "") + (P.web === "web" ? " · web" : ""); })(),
+    secFit: `j${n(P.j)} · comp ${n(P.boreComp)}`,
+    secMat: `${MATERIALS[P.material].label} · ${P.nozzle} · ${Math.round(P.infill * 100)}%`,
+    secConv: "mm ↔ in · mod ↔ DP",
+  };
+  for (const id in sum) { const el = $(id + "Sum"); if (el) el.textContent = sum[id]; }
+}
 
 /* Basic/Advanced mode (display filter only, no storage) */
 function setMode(basic) {
@@ -1725,6 +2044,7 @@ function tryRestoreFromHash() {
   try {
     const o = JSON.parse(atob(m[1]));
     applyValues(o); setMode(o._ui === "basic"); focus = o._focus === "B" ? "B" : "A";
+    flatTouched[""] = "flat" in o; flatTouched.B = "flatB" in o;
     if (o._preset != null) { $("preset").value = o._preset; const i = +o._preset; $("presetDesc").textContent = i >= 0 && PRESETS[i] ? PRESETS[i].desc : "Restored from link."; }
     return true;
   } catch (e) { return false; }
@@ -1759,7 +2079,7 @@ $("saveLink").addEventListener("click", async () => {
 })();
 
 initPresets();
-if (!tryRestoreFromHash()) { applyValues(Object.assign({}, DEFAULTS, PRESETS[0].set)); $("preset").value = "0"; $("presetDesc").textContent = PRESETS[0].desc; setMode(false); }
+if (!tryRestoreFromHash()) { applyValues(Object.assign({}, DEFAULTS, PRESETS[0].set)); settleFlats(PRESETS[0].set); $("preset").value = "0"; $("presetDesc").textContent = PRESETS[0].desc; setMode(false); }
 try { initView(); } catch (e) { console.error("3D viewport failed to start:", e); }
 update();
 </script>
